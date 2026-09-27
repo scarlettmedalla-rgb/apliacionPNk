@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -69,6 +72,12 @@
         <!-- Screen 10: Modify / Delete User Activity -->
         <activity
             android:name=".ModifyUserActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Developer Profile Activity -->
+        <activity
+            android:name=".DeveloperProfileActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 

@@ -20,7 +20,7 @@
             android:id="@+id/main"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="22dp"
+            android:paddingHorizontal="20dp"
             android:paddingTop="44dp">
 
             <!-- Top Header Bar: Left ("¡Hola!" + Moon | "Buenas Noches SmartTemp") | Right Logo -->
@@ -252,9 +252,9 @@
 
             </LinearLayout>
 
-            <!-- Middle Section: Active Dashboard Section (Active User & Active Sensor Cards) -->
+            <!-- FUNCIONALIDADES SECTION -->
             <LinearLayout
-                android:id="@+id/layout_active_section"
+                android:id="@+id/layout_features_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
@@ -267,24 +267,24 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="12dp"
-                    android:text="@string/active_monitoring"
+                    android:text="Funcionalidades"
                     android:textColor="@color/text_dark"
                     android:textSize="17sp"
                     android:textStyle="bold" />
 
-                <!-- Card 1: Usuario Activo -->
+                <!-- Feature 1 Card: Encender Flash -->
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_active_user"
+                    android:id="@+id/card_flashlight"
                     android:layout_width="match_parent"
                     android:layout_height="72dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="2dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
                     app:strokeColor="@color/card_border"
-                    app:strokeWidth="1dp">
+                    app:strokeWidth="1.2dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -292,12 +292,12 @@
                         android:paddingHorizontal="18dp">
 
                         <ImageView
-                            android:id="@+id/iv_icon_active_user"
+                            android:id="@+id/iv_icon_flashlight"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:layout_centerVertical="true"
                             android:contentDescription="@string/app_name"
-                            android:src="@drawable/ic_users"
+                            android:src="@drawable/ic_flashlight"
                             app:tint="@color/pink_primary" />
 
                         <LinearLayout
@@ -305,179 +305,95 @@
                             android:layout_height="wrap_content"
                             android:layout_centerVertical="true"
                             android:layout_marginStart="16dp"
-                            android:layout_toStartOf="@+id/status_dot_1"
-                            android:layout_toEndOf="@+id/iv_icon_active_user"
+                            android:layout_toStartOf="@+id/switch_flashlight"
+                            android:layout_toEndOf="@+id/iv_icon_flashlight"
                             android:orientation="vertical">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/active_user_label"
+                                android:text="Encender Flash"
                                 android:textColor="@color/text_dark"
                                 android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
-                                android:id="@+id/tv_active_user_name"
+                                android:id="@+id/tv_flash_status"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="@string/active_user_name"
+                                android:text="Apagada"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
-                        <!-- Green Online Status Indicator Dot -->
-                        <View
-                            android:id="@+id/status_dot_1"
-                            android:layout_width="12dp"
-                            android:layout_height="12dp"
+                        <!-- Switch Control -->
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switch_flashlight"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
-                            android:background="@drawable/bg_status_active" />
+                            app:useMaterialThemeColors="true" />
 
                     </RelativeLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Card 2: Sensor Activo -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_active_sensor"
+                <!-- Section: Mis Ampolletas -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="12dp"
+                    android:text="Mis Ampolletas"
+                    android:textColor="@color/text_dark"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- Horizontal RecyclerView for Ampolletas -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_ampolletas"
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginTop="14dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="2dp"
-                    app:strokeColor="@color/card_border"
-                    app:strokeWidth="1dp">
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_ampolleta" />
 
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:paddingHorizontal="18dp">
-
-                        <ImageView
-                            android:id="@+id/iv_icon_active_sensor"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_centerVertical="true"
-                            android:contentDescription="@string/app_name"
-                            android:src="@drawable/ic_sensors"
-                            app:tint="@color/pink_primary" />
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerVertical="true"
-                            android:layout_marginStart="16dp"
-                            android:layout_toStartOf="@+id/status_dot_2"
-                            android:layout_toEndOf="@+id/iv_icon_active_sensor"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/active_sensor_label"
-                                android:textColor="@color/text_dark"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tv_active_sensor_info"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/active_sensor_info"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-                        </LinearLayout>
-
-                        <!-- Green Online Status Indicator Dot -->
-                        <View
-                            android:id="@+id/status_dot_2"
-                            android:layout_width="12dp"
-                            android:layout_height="12dp"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:background="@drawable/bg_status_active" />
-
-                    </RelativeLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Card 3: DESARROLLADOR -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_btn_desarrollador"
+                <!-- SECCIÓN: DESARROLLADORES PNK -->
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginTop="14dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="2dp"
-                    app:strokeColor="@color/card_border"
-                    app:strokeWidth="1dp">
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:orientation="vertical">
 
-                    <RelativeLayout
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Desarrolladores Pnk"
+                        android:textColor="@color/text_dark"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="10dp"
+                        android:text="Personas detrás de SmartTemp"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <!-- Vertical List RecyclerView for Team Devs -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_team_devs"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:paddingHorizontal="18dp">
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        tools:listitem="@layout/item_team_dev" />
 
-                        <ImageView
-                            android:id="@+id/iv_icon_dev"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_centerVertical="true"
-                            android:contentDescription="@string/btn_desarrollador"
-                            android:src="@drawable/ic_developers"
-                            app:tint="@color/pink_primary" />
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerVertical="true"
-                            android:layout_marginStart="16dp"
-                            android:layout_toStartOf="@+id/badge_arrow_3"
-                            android:layout_toEndOf="@+id/iv_icon_dev"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/btn_desarrollador"
-                                android:textColor="@color/text_dark"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/dev_team_names"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
-                        </LinearLayout>
-
-                        <!-- Right Arrow Circle Badge -->
-                        <TextView
-                            android:id="@+id/badge_arrow_3"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:background="@drawable/bg_pink_tag"
-                            android:gravity="center"
-                            android:text="@string/arrow_right_symbol"
-                            android:textColor="@color/pink_primary"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                    </RelativeLayout>
-                </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
 
                 <!-- Bottom Clearance Spacer -->
                 <View
@@ -500,9 +416,9 @@
         android:layout_marginBottom="16dp"
         app:cardBackgroundColor="@color/white"
         app:cardCornerRadius="26dp"
-        app:cardElevation="2dp"
+        app:cardElevation="3dp"
         app:strokeColor="@color/card_border"
-        app:strokeWidth="1dp">
+        app:strokeWidth="1.2dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -529,7 +445,7 @@
                 android:textSize="11sp"
                 android:textStyle="bold"
                 app:drawableTint="@color/pink_primary"
-                app:drawableTopCompat="@drawable/ic_users" />
+                app:drawableTopCompat="@drawable/ic_home" />
 
             <!-- Nav Item 2: Usuarios -->
             <TextView

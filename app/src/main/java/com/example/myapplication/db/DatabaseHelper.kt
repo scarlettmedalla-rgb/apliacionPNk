@@ -17,7 +17,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "iot_app_db_v2.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         private const val TABLE_USERS = "users"
         private const val KEY_USER_ID = "id"
@@ -25,6 +25,7 @@ class DatabaseHelper(context: Context) :
         private const val KEY_USER_LASTNAME = "lastname"
         private const val KEY_USER_EMAIL = "email"
         private const val KEY_USER_PASSWORD = "password"
+        private const val KEY_USER_PHOTO = "profile_photo"
 
         private const val TABLE_SENSORS = "sensors"
         private const val KEY_SENSOR_ID = "id"
@@ -42,7 +43,8 @@ class DatabaseHelper(context: Context) :
                 + KEY_USER_FIRSTNAME + " TEXT,"
                 + KEY_USER_LASTNAME + " TEXT,"
                 + KEY_USER_EMAIL + " TEXT UNIQUE,"
-                + KEY_USER_PASSWORD + " TEXT" + ")")
+                + KEY_USER_PASSWORD + " TEXT,"
+                + KEY_USER_PHOTO + " TEXT" + ")")
 
         val createSensorsTable = ("CREATE TABLE " + TABLE_SENSORS + "("
                 + KEY_SENSOR_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -59,9 +61,13 @@ class DatabaseHelper(context: Context) :
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_SENSORS")
-        onCreate(db)
+        if (oldVersion < 2) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_USERS ADD COLUMN $KEY_USER_PHOTO TEXT")
+            } catch (e: Exception) {
+                // Ignore if already exists
+            }
+        }
     }
 
     private fun currentDateString(): String {
@@ -82,6 +88,7 @@ class DatabaseHelper(context: Context) :
                 put(KEY_USER_LASTNAME, u.lastname)
                 put(KEY_USER_EMAIL, u.email)
                 put(KEY_USER_PASSWORD, u.password)
+                put(KEY_USER_PHOTO, u.profilePhoto)
             }
             db.insert(TABLE_USERS, null, cv)
         }
@@ -117,6 +124,7 @@ class DatabaseHelper(context: Context) :
             put(KEY_USER_LASTNAME, user.lastname)
             put(KEY_USER_EMAIL, user.email.lowercase(Locale.getDefault()).trim())
             put(KEY_USER_PASSWORD, user.password)
+            put(KEY_USER_PHOTO, user.profilePhoto)
         }
         return try {
             db.insertOrThrow(TABLE_USERS, null, values)
@@ -150,6 +158,7 @@ class DatabaseHelper(context: Context) :
             val lnIdx = cursor.getColumnIndexOrThrow(KEY_USER_LASTNAME)
             val emailIdx = cursor.getColumnIndexOrThrow(KEY_USER_EMAIL)
             val passIdx = cursor.getColumnIndexOrThrow(KEY_USER_PASSWORD)
+            val photoIdx = cursor.getColumnIndex(KEY_USER_PHOTO)
 
             do {
                 val fn = cursor.getString(fnIdx) ?: ""
@@ -159,6 +168,7 @@ class DatabaseHelper(context: Context) :
                 val fullTextNormalized = normalizeString("$fn $ln $email")
 
                 if (normalizedQuery.isEmpty() || fullTextNormalized.contains(normalizedQuery)) {
+                    val photo = if (photoIdx != -1 && !cursor.isNull(photoIdx)) cursor.getString(photoIdx) else null
                     val user = User(
                         id = cursor.getInt(idIdx),
                         rut = "",
@@ -166,7 +176,8 @@ class DatabaseHelper(context: Context) :
                         lastname = ln,
                         email = email,
                         phone = "",
-                        password = cursor.getString(passIdx) ?: ""
+                        password = cursor.getString(passIdx) ?: "",
+                        profilePhoto = photo
                     )
                     userList.add(user)
                 }
@@ -176,12 +187,41 @@ class DatabaseHelper(context: Context) :
         return userList
     }
 
+    fun getUserById(userId: Int): User? {
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_USERS WHERE $KEY_USER_ID = ?", arrayOf(userId.toString()))
+        var user: User? = null
+        if (cursor.moveToFirst()) {
+            val idIdx = cursor.getColumnIndexOrThrow(KEY_USER_ID)
+            val fnIdx = cursor.getColumnIndexOrThrow(KEY_USER_FIRSTNAME)
+            val lnIdx = cursor.getColumnIndexOrThrow(KEY_USER_LASTNAME)
+            val emailIdx = cursor.getColumnIndexOrThrow(KEY_USER_EMAIL)
+            val passIdx = cursor.getColumnIndexOrThrow(KEY_USER_PASSWORD)
+            val photoIdx = cursor.getColumnIndex(KEY_USER_PHOTO)
+
+            val photo = if (photoIdx != -1 && !cursor.isNull(photoIdx)) cursor.getString(photoIdx) else null
+            user = User(
+                id = cursor.getInt(idIdx),
+                rut = "",
+                firstname = cursor.getString(fnIdx) ?: "",
+                lastname = cursor.getString(lnIdx) ?: "",
+                email = cursor.getString(emailIdx) ?: "",
+                phone = "",
+                password = cursor.getString(passIdx) ?: "",
+                profilePhoto = photo
+            )
+        }
+        cursor.close()
+        return user
+    }
+
     fun updateUser(user: User): Int {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(KEY_USER_FIRSTNAME, user.firstname)
             put(KEY_USER_LASTNAME, user.lastname)
             put(KEY_USER_EMAIL, user.email.lowercase(Locale.getDefault()).trim())
+            put(KEY_USER_PHOTO, user.profilePhoto)
         }
         return db.update(TABLE_USERS, values, "$KEY_USER_ID = ?", arrayOf(user.id.toString()))
     }

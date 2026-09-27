@@ -1,8 +1,13 @@
 package com.example.myapplication
 
+import android.net.Uri
 import android.os.Bundle
 import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -11,11 +16,33 @@ import com.example.myapplication.model.User
 import com.example.myapplication.util.SweetAlertHelper
 import com.example.myapplication.util.ValidationUtils
 import com.google.android.material.button.MaterialButton
+import java.io.File
+import java.io.FileOutputStream
 
 class ModifyUserActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private var userId: Int = -1
+    private var selectedPhotoPath: String? = null
+
+    private lateinit var ivProfilePhoto: ImageView
+    private lateinit var tvProfileName: TextView
+    private lateinit var etFn: EditText
+    private lateinit var etLn: EditText
+    private lateinit var etEm: EditText
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            val savedPath = saveImageToInternalStorage(uri)
+            if (savedPath != null) {
+                selectedPhotoPath = savedPath
+                displayProfileImage(savedPath)
+                SweetAlertHelper.showSuccess(this, "Vista Previa", "Imagen seleccionada correctamente. Presiona Guardar Cambios para confirmarla.")
+            } else {
+                SweetAlertHelper.showError(this, "Error", "No se pudo procesar la imagen seleccionada.")
+            }
+        }
+    }
 
     override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
         if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
@@ -43,21 +70,42 @@ class ModifyUserActivity : AppCompatActivity() {
             insets
         }
 
-        userId = intent.getIntExtra("USER_ID", -1)
-        val initialFn = intent.getStringExtra("USER_FN") ?: ""
-        val initialLn = intent.getStringExtra("USER_LN") ?: ""
-        val initialEmail = intent.getStringExtra("USER_EMAIL") ?: ""
+        val btnBack = findViewById<ImageButton>(R.id.btn_profile_back)
+        btnBack?.setOnClickListener { finish() }
 
-        val etFn = findViewById<EditText>(R.id.et_mod_firstname)
-        val etLn = findViewById<EditText>(R.id.et_mod_lastname)
-        val etEm = findViewById<EditText>(R.id.et_mod_email)
+        userId = intent.getIntExtra("USER_ID", -1)
+
+        ivProfilePhoto = findViewById(R.id.iv_profile_photo)
+        tvProfileName = findViewById(R.id.tv_profile_name)
+        etFn = findViewById(R.id.et_mod_firstname)
+        etLn = findViewById(R.id.et_mod_lastname)
+        etEm = findViewById(R.id.et_mod_email)
+
+        val btnChangePhoto = findViewById<MaterialButton>(R.id.btn_change_photo)
+        val btnModificar = findViewById<MaterialButton>(R.id.btn_mod_modificar)
+        val btnEliminar = findViewById<MaterialButton>(R.id.btn_mod_eliminar)
+
+        // Load existing user from database or Intent extras
+        val userFromDb = if (userId != -1) dbHelper.getUserById(userId) else null
+        val initialFn = userFromDb?.firstname ?: intent.getStringExtra("USER_FN") ?: ""
+        val initialLn = userFromDb?.lastname ?: intent.getStringExtra("USER_LN") ?: ""
+        val initialEmail = userFromDb?.email ?: intent.getStringExtra("USER_EMAIL") ?: ""
+        selectedPhotoPath = userFromDb?.profilePhoto
 
         etFn.setText(initialFn)
         etLn.setText(initialLn)
         etEm.setText(initialEmail)
 
-        val btnModificar = findViewById<MaterialButton>(R.id.btn_mod_modificar)
-        val btnEliminar = findViewById<MaterialButton>(R.id.btn_mod_eliminar)
+        val fullName = "$initialFn $initialLn".trim()
+        tvProfileName.text = fullName.ifEmpty { "Usuario SmartTemp" }
+
+        if (!selectedPhotoPath.isNullOrEmpty()) {
+            displayProfileImage(selectedPhotoPath!!)
+        }
+
+        btnChangePhoto.setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
 
         btnModificar.setOnClickListener {
             val fn = etFn.text.toString().trim()
@@ -119,15 +167,16 @@ class ModifyUserActivity : AppCompatActivity() {
                 lastname = ln,
                 email = email,
                 phone = "",
-                password = ""
+                password = "",
+                profilePhoto = selectedPhotoPath
             )
 
             dbHelper.updateUser(updatedUser)
 
             SweetAlertHelper.showSuccess(
                 context = this,
-                title = "¡Usuario Modificado!",
-                message = "Los datos del usuario han sido actualizados con éxito."
+                title = "¡Perfil Actualizado!",
+                message = "Los datos y fotografía de perfil han sido guardados con éxito."
             ) {
                 finish()
             }
@@ -151,6 +200,40 @@ class ModifyUserActivity : AppCompatActivity() {
                     }
                 }
             )
+        }
+    }
+
+    private fun displayProfileImage(path: String) {
+        try {
+            val file = File(path)
+            if (file.exists()) {
+                ivProfilePhoto.clearColorFilter()
+                ivProfilePhoto.setImageURI(Uri.fromFile(file))
+            } else {
+                ivProfilePhoto.clearColorFilter()
+                ivProfilePhoto.setImageURI(Uri.parse(path))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ivProfilePhoto.setImageResource(R.drawable.ic_users)
+        }
+    }
+
+    private fun saveImageToInternalStorage(uri: Uri): String? {
+        return try {
+            val inputStream = contentResolver.openInputStream(uri) ?: return null
+            val dir = File(filesDir, "profile_photos")
+            if (!dir.exists()) dir.mkdirs()
+            val fileName = "user_photo_${userId}_${System.currentTimeMillis()}.jpg"
+            val destFile = File(dir, fileName)
+            val outputStream = FileOutputStream(destFile)
+            inputStream.copyTo(outputStream)
+            inputStream.close()
+            outputStream.close()
+            destFile.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }

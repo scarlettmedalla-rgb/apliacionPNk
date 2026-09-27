@@ -1,15 +1,19 @@
 package com.example.myapplication.adapter
 
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.model.Developer
+import java.io.File
 
 class DeveloperAdapter(
-    private val developers: List<Developer>
+    private var developers: List<Developer>,
+    private val onItemClick: ((Developer) -> Unit)? = null
 ) : RecyclerView.Adapter<DeveloperAdapter.DevViewHolder>() {
 
     class DevViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -18,6 +22,7 @@ class DeveloperAdapter(
         val tvDesc: TextView = itemView.findViewById(R.id.tv_dev_desc)
         val tvEmail: TextView = itemView.findViewById(R.id.tv_dev_email)
         val tvGithub: TextView = itemView.findViewById(R.id.tv_dev_github)
+        val ivAvatar: ImageView = itemView.findViewById(R.id.iv_dev_avatar)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DevViewHolder {
@@ -32,7 +37,27 @@ class DeveloperAdapter(
         holder.tvDesc.text = dev.description
         holder.tvEmail.text = "✉ ${dev.email}"
         holder.tvGithub.text = "🔗 ${dev.github}"
+
+        if (!dev.photoUri.isNullOrEmpty()) {
+            val file = File(dev.photoUri)
+            if (file.exists()) {
+                holder.ivAvatar.clearColorFilter()
+                holder.ivAvatar.setImageURI(Uri.fromFile(file))
+            } else {
+                holder.ivAvatar.clearColorFilter()
+                holder.ivAvatar.setImageURI(Uri.parse(dev.photoUri))
+            }
+        }
+
+        holder.itemView.setOnClickListener {
+            onItemClick?.invoke(dev)
+        }
     }
 
     override fun getItemCount(): Int = developers.size
+
+    fun updateData(newDevs: List<Developer>) {
+        developers = newDevs
+        notifyDataSetChanged()
+    }
 }

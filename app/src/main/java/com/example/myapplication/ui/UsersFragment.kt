@@ -1,5 +1,6 @@
 package com.example.myapplication.ui
 
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.text.Editable
@@ -10,11 +11,11 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.ModifyUserActivity
 import com.example.myapplication.R
 import com.example.myapplication.adapter.UserAdapter
 import com.example.myapplication.db.DatabaseHelper
@@ -76,7 +77,14 @@ class UsersFragment : Fragment() {
 
         userAdapter = UserAdapter(
             users = emptyList(),
-            onEditClick = { user -> showEditUserDialog(user) },
+            onEditClick = { user ->
+                val intent = Intent(requireContext(), ModifyUserActivity::class.java)
+                intent.putExtra("USER_ID", user.id)
+                intent.putExtra("USER_FN", user.firstname)
+                intent.putExtra("USER_LN", user.lastname)
+                intent.putExtra("USER_EMAIL", user.email)
+                startActivity(intent)
+            },
             onDeleteClick = { user -> showDeleteConfirmation(user) }
         )
         rvUsers.adapter = userAdapter
@@ -112,6 +120,13 @@ class UsersFragment : Fragment() {
         loadUsers("")
 
         return view
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::etSearch.isInitialized) {
+            loadUsers(etSearch.text.toString())
+        }
     }
 
     private fun switchTab(isSearchTab: Boolean) {
@@ -234,105 +249,6 @@ class UsersFragment : Fragment() {
 
         // Switch to Search Mode Tab
         switchTab(isSearchTab = true)
-    }
-
-    private fun showEditUserDialog(user: User) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_register, null)
-        val etR = dialogView.findViewById<EditText>(R.id.et_reg_rut)
-        val etFn = dialogView.findViewById<EditText>(R.id.et_reg_firstname)
-        val etLn = dialogView.findViewById<EditText>(R.id.et_reg_lastname)
-        val etEm = dialogView.findViewById<EditText>(R.id.et_reg_email)
-        val etPh = dialogView.findViewById<EditText>(R.id.et_reg_phone)
-        val etPs = dialogView.findViewById<EditText>(R.id.et_reg_pass)
-        val btnRegSave = dialogView.findViewById<MaterialButton>(R.id.btn_reg_save)
-        val btnRegCancel = dialogView.findViewById<MaterialButton>(R.id.btn_reg_cancel)
-
-        etR.setText(user.rut)
-        etFn.setText(user.firstname)
-        etLn.setText(user.lastname)
-        etEm.setText(user.email)
-        etPh.setText(user.phone)
-        etPs.setText(user.password)
-
-        val alertDialog = AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .create()
-
-        btnRegSave.setOnClickListener {
-            val rut = etR.text.toString().trim()
-            val fn = etFn.text.toString().trim()
-            val ln = etLn.text.toString().trim()
-            val email = etEm.text.toString().trim()
-            val phone = etPh.text.toString().trim()
-            val pass = etPs.text.toString().trim()
-
-            if (rut.isEmpty() || fn.isEmpty() || email.isEmpty()) {
-                SweetAlertHelper.showError(
-                    requireContext(),
-                    "Error",
-                    "RUT, Nombre y Correo son obligatorios."
-                )
-                return@setOnClickListener
-            }
-
-            if (ValidationUtils.containsScriptOrInjection(rut) ||
-                ValidationUtils.containsScriptOrInjection(fn) ||
-                ValidationUtils.containsScriptOrInjection(ln) ||
-                ValidationUtils.containsScriptOrInjection(email) ||
-                ValidationUtils.containsScriptOrInjection(phone) ||
-                ValidationUtils.containsScriptOrInjection(pass)
-            ) {
-                SweetAlertHelper.showError(
-                    requireContext(),
-                    "Seguridad - Entrada Inválida",
-                    "No se permiten scripts, comandos ni caracteres peligrosos en las celdas."
-                )
-                return@setOnClickListener
-            }
-
-            if (!ValidationUtils.isValidName(fn)) {
-                SweetAlertHelper.showError(
-                    requireContext(),
-                    "Nombre Inválido",
-                    "El nombre solo debe contener letras. No se permiten números (como 12345) ni símbolos."
-                )
-                return@setOnClickListener
-            }
-
-            if (ln.isNotEmpty() && !ValidationUtils.isValidName(ln)) {
-                SweetAlertHelper.showError(
-                    requireContext(),
-                    "Apellido Inválido",
-                    "El apellido solo debe contener letras. No se permiten números (como 12345) ni símbolos."
-                )
-                return@setOnClickListener
-            }
-
-            val updatedUser = user.copy(
-                rut = rut,
-                firstname = fn,
-                lastname = ln,
-                email = email,
-                phone = phone,
-                password = pass
-            )
-            dbHelper.updateUser(updatedUser)
-            alertDialog.dismiss()
-
-            SweetAlertHelper.showSuccess(
-                requireContext(),
-                "¡Usuario Actualizado!",
-                "Los datos se han guardado exitosamente."
-            )
-
-            loadUsers(etSearch.text.toString())
-        }
-
-        btnRegCancel.setOnClickListener {
-            alertDialog.dismiss()
-        }
-
-        alertDialog.show()
     }
 
     private fun showDeleteConfirmation(user: User) {

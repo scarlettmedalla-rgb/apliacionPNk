@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,11 +23,17 @@ import com.android.volley.RequestQueue
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.example.myapplication.adapter.AmpolletaAdapter
+import com.example.myapplication.adapter.TeamDevAdapter
 import com.example.myapplication.db.DatabaseHelper
+import com.example.myapplication.model.Ampolleta
+import com.example.myapplication.util.DeveloperHelper
 import com.example.myapplication.util.EdgeToEdgeHelper
+import com.example.myapplication.util.FlashlightManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.switchmaterial.SwitchMaterial
 import org.json.JSONException
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -39,8 +46,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var tvGreetingTime: TextView
     private lateinit var ivWeatherIcon: ImageView
-    private lateinit var tvActiveSensorInfo: TextView
     private lateinit var carouselAdapter: CarouselSensorAdapter
+
+    private lateinit var switchFlashlight: SwitchMaterial
+    private lateinit var tvFlashStatus: TextView
+    private lateinit var rvAmpolletas: RecyclerView
+    private lateinit var ampolletaAdapter: AmpolletaAdapter
+
+    private lateinit var rvTeamDevs: RecyclerView
+    private lateinit var teamDevAdapter: TeamDevAdapter
 
     private var tvPinkHeroTimeMain: TextView? = null
     private var tvPinkHeroTempMain: TextView? = null
@@ -83,17 +97,17 @@ class MainActivity : AppCompatActivity() {
 
         tvGreetingTime = findViewById(R.id.tv_greeting_time)
         ivWeatherIcon = findViewById(R.id.iv_weather_icon)
-        tvActiveSensorInfo = findViewById(R.id.tv_active_sensor_info)
 
         tvPinkHeroTimeMain = findViewById(R.id.tv_pink_hero_time_main)
         tvPinkHeroTempMain = findViewById(R.id.tv_pink_hero_temp_main)
         tvPinkHeroHumMain = findViewById(R.id.tv_pink_hero_hum_main)
 
-        val btnHeroSensors = findViewById<MaterialButton>(R.id.btn_hero_sensors)
-        val cardActiveUser = findViewById<MaterialCardView>(R.id.card_active_user)
-        val cardActiveSensor = findViewById<MaterialCardView>(R.id.card_active_sensor)
-        val cardDesarrollador = findViewById<MaterialCardView>(R.id.card_btn_desarrollador)
+        switchFlashlight = findViewById(R.id.switch_flashlight)
+        tvFlashStatus = findViewById(R.id.tv_flash_status)
 
+        val btnHeroSensors = findViewById<MaterialButton>(R.id.btn_hero_sensors)
+
+        // 1. Sensores por Localidad Carousel
         val rvCarousel = findViewById<RecyclerView>(R.id.rv_sensors_carousel)
         rvCarousel.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
@@ -110,6 +124,37 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
         rvCarousel.adapter = carouselAdapter
+
+        // 2. Section "Mis Ampolletas"
+        rvAmpolletas = findViewById(R.id.rv_ampolletas)
+        rvAmpolletas.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+
+        val sampleAmpolletas = listOf(
+            Ampolleta(1, "Ampolleta 1", "Encendida • 100%", imageResId = R.drawable.ic_sun),
+            Ampolleta(2, "Ampolleta 2", "Luz Cálida • Operativo", imageResId = R.drawable.ic_sun),
+            Ampolleta(3, "Ampolleta 3", "Inteligente • Standby", imageResId = R.drawable.ic_sun)
+        )
+        ampolletaAdapter = AmpolletaAdapter(sampleAmpolletas)
+        rvAmpolletas.adapter = ampolletaAdapter
+
+        // 3. Section "Desarrolladores Pnk" (Vertical List matching User Cards)
+        rvTeamDevs = findViewById(R.id.rv_team_devs)
+        rvTeamDevs.layoutManager = LinearLayoutManager(this)
+
+        teamDevAdapter = TeamDevAdapter(DeveloperHelper.getDevelopers(this)) { dev ->
+            val intent = Intent(this, DeveloperProfileActivity::class.java)
+            intent.putExtra("DEV_ID", dev.id)
+            startActivity(intent)
+        }
+        rvTeamDevs.adapter = teamDevAdapter
+
+        // 4. Flashlight Switch behavior
+        switchFlashlight.isChecked = FlashlightManager.isTorchOn()
+        updateFlashStatusText(FlashlightManager.isTorchOn())
+
+        switchFlashlight.setOnCheckedChangeListener { _, isChecked ->
+            handleFlashToggle(isChecked)
+        }
 
         val navItemHome = findViewById<TextView>(R.id.nav_item_home)
         val navItemUsers = findViewById<TextView>(R.id.nav_item_users)
@@ -135,23 +180,9 @@ class MainActivity : AppCompatActivity() {
             showAddOptionDialog()
         }
 
-        // Active Cards Click Actions
-        cardActiveUser.setOnClickListener {
-            val intent = Intent(this, UserListActivity::class.java)
-            startActivity(intent)
-        }
+        // Bottom Navigation Bar Item Clicks & Styling
+        highlightHomeTab(navItemHome, navItemUsers, navItemSensors, navItemSettings)
 
-        cardActiveSensor.setOnClickListener {
-            val intent = Intent(this, SensorsActivity::class.java)
-            startActivity(intent)
-        }
-
-        cardDesarrollador.setOnClickListener {
-            val intent = Intent(this, DevelopersActivity::class.java)
-            startActivity(intent)
-        }
-
-        // Bottom Navigation Bar Item Clicks
         navItemHome.setOnClickListener {
             // Already on home screen
         }
@@ -172,8 +203,62 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleFlashToggle(isChecked: Boolean) {
+        if (isChecked) {
+            val success = FlashlightManager.toggleFlashlight(this)
+            if (success) {
+                updateFlashStatusText(true)
+            } else {
+                switchFlashlight.setOnCheckedChangeListener(null)
+                switchFlashlight.isChecked = false
+                updateFlashStatusText(false)
+                switchFlashlight.setOnCheckedChangeListener { _, checked ->
+                    handleFlashToggle(checked)
+                }
+            }
+        } else {
+            FlashlightManager.turnOff(this)
+            updateFlashStatusText(false)
+        }
+    }
+
+    private fun updateFlashStatusText(isOn: Boolean) {
+        if (isOn) {
+            tvFlashStatus.text = "Encendida • Activa"
+            tvFlashStatus.setTextColor(ContextCompat.getColor(this, R.color.pink_primary))
+        } else {
+            tvFlashStatus.text = "Apagada"
+            tvFlashStatus.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+        }
+    }
+
+    private fun highlightHomeTab(
+        home: TextView,
+        users: TextView,
+        sensors: TextView,
+        settings: TextView
+    ) {
+        val pinkColor = ContextCompat.getColor(this, R.color.pink_primary)
+        val secondaryColor = ContextCompat.getColor(this, R.color.text_secondary)
+
+        home.setTextColor(pinkColor)
+        home.compoundDrawableTintList = ContextCompat.getColorStateList(this, R.color.pink_primary)
+
+        users.setTextColor(secondaryColor)
+        users.compoundDrawableTintList = ContextCompat.getColorStateList(this, R.color.text_secondary)
+
+        sensors.setTextColor(secondaryColor)
+        sensors.compoundDrawableTintList = ContextCompat.getColorStateList(this, R.color.text_secondary)
+
+        settings.setTextColor(secondaryColor)
+        settings.compoundDrawableTintList = ContextCompat.getColorStateList(this, R.color.text_secondary)
+    }
+
     override fun onResume() {
         super.onResume()
+        if (::teamDevAdapter.isInitialized) {
+            teamDevAdapter.updateData(DeveloperHelper.getDevelopers(this))
+        }
     }
 
     private fun obtenerDatosApi() {
@@ -195,9 +280,6 @@ class MainActivity : AppCompatActivity() {
                     tvPinkHeroTimeMain?.text = "Hora Actual: $nowStr"
                     tvPinkHeroTempMain?.text = "$tempStr °C"
                     tvPinkHeroHumMain?.text = "$humStr %"
-
-                    // Update Active Monitoring Card info
-                    tvActiveSensorInfo.text = "Ovalle Central • $tempStr °C ($humStr %)"
 
                     // Update Carousel items (Sensores por Localidad)
                     val liveCarouselItems = listOf(

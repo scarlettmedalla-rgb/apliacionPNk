@@ -6,5 +6,6 @@ data class Developer(
     val role: String,
     val email: String,
     val github: String,
-    val description: String
+    val description: String,
+    val photoUri: String? = null
 )

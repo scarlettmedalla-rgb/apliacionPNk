@@ -8,7 +8,8 @@ data class User(
     val email: String,
     val phone: String,
     val password: String = "",
-    val role: String = "Usuario"
+    val role: String = "Usuario",
+    val profilePhoto: String? = null
 ) {
     val fullName: String
         get() = "$firstname $lastname".trim()

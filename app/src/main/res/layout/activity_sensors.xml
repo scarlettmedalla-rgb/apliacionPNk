@@ -24,30 +24,20 @@
             android:paddingHorizontal="24dp"
             android:paddingTop="28dp">
 
-            <!-- Top Header Bar: Back Button + Title -->
+            <!-- Top Header Bar: Title + Add Button -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical">
 
-                <ImageButton
-                    android:id="@+id/btn_sensors_back"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_pink_tag"
-                    android:contentDescription="@string/app_name"
-                    android:src="@drawable/ic_expand_more"
-                    app:tint="@color/pink_primary" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
                     android:text="@string/title_sensors_data"
                     android:textColor="@color/text_dark"
-                    android:textSize="20sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <ImageButton
@@ -79,32 +69,61 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Red IoT Activa"
-                        android:textColor="@color/text_pink_light"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Monitoreo Térmico en Tiempo Real"
-                        android:textColor="@color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
+                            android:layout_toStartOf="@+id/btn_toggle_flashlight"
+                            android:orientation="vertical">
 
-                    <!-- Live Current Time -->
-                    <TextView
-                        android:id="@+id/tv_pink_hero_time"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Hora Actual: Cargando..."
-                        android:textColor="@color/text_pink_light"
-                        android:textSize="12sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Red IoT Activa"
+                                android:textColor="@color/text_pink_light"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Monitoreo Térmico en Tiempo Real"
+                                android:textColor="@color/white"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <!-- Live Current Time -->
+                            <TextView
+                                android:id="@+id/tv_pink_hero_time"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Hora Actual: Cargando..."
+                                android:textColor="@color/text_pink_light"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <!-- Flashlight Toggle Button -->
+                        <ImageButton
+                            android:id="@+id/btn_toggle_flashlight"
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:background="@drawable/bg_circle_flashlight"
+                            android:contentDescription="Linterna"
+                            android:padding="10dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_flashlight"
+                            app:tint="@color/white" />
+
+                    </RelativeLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"

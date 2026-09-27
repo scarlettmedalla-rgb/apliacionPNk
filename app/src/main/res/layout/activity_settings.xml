@@ -70,7 +70,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
             app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="18dp"
             app:cardElevation="2dp"
             app:strokeColor="@color/card_border"
             app:strokeWidth="1dp">
@@ -170,7 +170,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="18dp"
             app:cardElevation="2dp"
             app:strokeColor="@color/card_border"
             app:strokeWidth="1dp">
@@ -243,18 +243,22 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Clear Cache / Reset Button -->
+        <!-- Cerrar Sesión Button -->
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_clear_cache"
+            android:id="@+id/btn_logout"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="24dp"
-            android:text="Limpiar Caché de Sensores"
+            android:text="Cerrar sesión"
             android:textColor="@color/white"
             android:textSize="15sp"
             android:textStyle="bold"
-            app:backgroundTint="@color/navy_dark"
-            app:cornerRadius="14dp" />
+            app:backgroundTint="@color/pink_primary"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_logout"
+            app:iconGravity="textStart"
+            app:iconPadding="10dp"
+            app:iconTint="@color/white" />
 
     </LinearLayout>
 </ScrollView>

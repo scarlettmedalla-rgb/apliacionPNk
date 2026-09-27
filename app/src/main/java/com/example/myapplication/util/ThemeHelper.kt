@@ -122,9 +122,5 @@ object ThemeHelper {
         activity.findViewById<TextView>(R.id.tv_initial_title)?.setTextColor(primaryColor)
         activity.findViewById<TextView>(R.id.tv_welcome_title)?.setTextColor(primaryColor)
         activity.findViewById<TextView>(R.id.tv_register_title)?.setTextColor(primaryColor)
-
-        activity.findViewById<ImageView>(R.id.iv_icon_active_user)?.imageTintList = ColorStateList.valueOf(primaryColor)
-        activity.findViewById<ImageView>(R.id.iv_icon_active_sensor)?.imageTintList = ColorStateList.valueOf(primaryColor)
-        activity.findViewById<ImageView>(R.id.iv_icon_dev)?.imageTintList = ColorStateList.valueOf(primaryColor)
     }
 }

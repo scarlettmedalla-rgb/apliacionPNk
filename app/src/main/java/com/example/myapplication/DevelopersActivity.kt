@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import androidx.activity.enableEdgeToEdge
@@ -9,10 +10,13 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.adapter.DeveloperAdapter
-import com.example.myapplication.model.Developer
+import com.example.myapplication.util.DeveloperHelper
 import com.example.myapplication.util.SwipeBackHelper
 
 class DevelopersActivity : AppCompatActivity() {
+
+    private lateinit var rvDevs: RecyclerView
+    private lateinit var adapter: DeveloperAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,37 +35,21 @@ class DevelopersActivity : AppCompatActivity() {
             insets
         }
 
-        val rvDevs = findViewById<RecyclerView>(R.id.rv_devs_list)
+        rvDevs = findViewById(R.id.rv_devs_list)
         rvDevs.layoutManager = LinearLayoutManager(this)
 
-        val devList = listOf(
-            Developer(
-                id = 1,
-                name = "JORGE LUIS CORTÉS GALLARDO",
-                role = "Lead Software Engineer • Fullstack Developer",
-                email = "jorge.cortes@institucion.cl",
-                github = "github.com/jorgecortes",
-                description = "Institución: Desarrollo de Aplicaciones Móviles IoT\nCarrera: Ingeniería en Informática / Sección: 001D"
-            ),
-            Developer(
-                id = 2,
-                name = "KEVIN ENCINA MOLINA",
-                role = "Software Architect • Backend & Mobile",
-                email = "kevin.encina@institucion.cl",
-                github = "github.com/kevinencina",
-                description = "Institución: Desarrollo de Aplicaciones Móviles IoT\nCarrera: Ingeniería en Informática / Sección: 001D"
-            ),
-            Developer(
-                id = 3,
-                name = "SCARLETT WILLIAMS MEDALLA",
-                role = "UI/UX & Mobile Developer",
-                email = "scarlett.williams@institucion.cl",
-                github = "github.com/scarlettwilliams",
-                description = "Institución: Desarrollo de Aplicaciones Móviles IoT\nCarrera: Ingeniería en Informática / Sección: 001D"
-            )
-        )
+        adapter = DeveloperAdapter(emptyList()) { dev ->
+            val intent = Intent(this, DeveloperProfileActivity::class.java)
+            intent.putExtra("DEV_ID", dev.id)
+            startActivity(intent)
+        }
+        rvDevs.adapter = adapter
+    }
 
-        rvDevs.adapter = DeveloperAdapter(devList)
+    override fun onResume() {
+        super.onResume()
+        val devs = DeveloperHelper.getDevelopers(this)
+        adapter.updateData(devs)
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {

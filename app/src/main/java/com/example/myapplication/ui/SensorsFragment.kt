@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -21,6 +22,7 @@ import com.example.myapplication.R
 import com.example.myapplication.adapter.SensorAdapter
 import com.example.myapplication.db.DatabaseHelper
 import com.example.myapplication.model.Sensor
+import com.example.myapplication.util.FlashlightManager
 import com.example.myapplication.util.SweetAlertHelper
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import org.json.JSONException
@@ -38,6 +40,7 @@ class SensorsFragment : Fragment() {
     private var tvPinkHeroTime: TextView? = null
     private var tvPinkHeroTemp: TextView? = null
     private var tvPinkHeroHum: TextView? = null
+    private var btnFlashlight: ImageButton? = null
 
     private lateinit var datos: RequestQueue
     private val mHandler = Handler(Looper.getMainLooper())
@@ -64,6 +67,14 @@ class SensorsFragment : Fragment() {
         tvPinkHeroTime = view.findViewById(R.id.tv_pink_hero_time)
         tvPinkHeroTemp = view.findViewById(R.id.tv_pink_hero_temp)
         tvPinkHeroHum = view.findViewById(R.id.tv_pink_hero_hum)
+        btnFlashlight = view.findViewById(R.id.btn_toggle_flashlight)
+
+        btnFlashlight?.setOnClickListener {
+            val success = FlashlightManager.toggleFlashlight(requireContext())
+            if (success) {
+                updateFlashlightButtonState(btnFlashlight!!, FlashlightManager.isTorchOn())
+            }
+        }
 
         // Initialize Volley RequestQueue
         datos = Volley.newRequestQueue(requireContext())
@@ -96,6 +107,21 @@ class SensorsFragment : Fragment() {
         loadSensors()
 
         return view
+    }
+
+    override fun onResume() {
+        super.onResume()
+        btnFlashlight?.let {
+            updateFlashlightButtonState(it, FlashlightManager.isTorchOn())
+        }
+    }
+
+    private fun updateFlashlightButtonState(btn: ImageButton, isOn: Boolean) {
+        if (isOn) {
+            btn.setBackgroundResource(R.drawable.bg_circle_flashlight_on)
+        } else {
+            btn.setBackgroundResource(R.drawable.bg_circle_flashlight)
+        }
     }
 
     private fun fechahora(): String {
@@ -132,6 +158,7 @@ class SensorsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         mHandler.removeCallbacks(refrescar)
+        FlashlightManager.turnOff(requireContext())
     }
 
     private fun loadSensors() {

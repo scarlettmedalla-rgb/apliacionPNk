@@ -1,5 +1,6 @@
 package com.example.myapplication.adapter
 
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.model.User
+import java.io.File
 
 class UserAdapter(
     private var users: List<User>,
@@ -23,6 +25,7 @@ class UserAdapter(
     class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val cardItem: View = itemView.findViewById(R.id.card_user_item)
         val tvInitial: TextView = itemView.findViewById(R.id.tv_user_initial)
+        val ivAvatar: ImageView = itemView.findViewById(R.id.iv_user_avatar)
         val tvName: TextView = itemView.findViewById(R.id.tv_user_name)
         val tvEmail: TextView = itemView.findViewById(R.id.tv_user_email)
         val tvPhone: TextView = itemView.findViewById(R.id.tv_user_phone)
@@ -47,7 +50,25 @@ class UserAdapter(
         val context = holder.itemView.context
         val isExpanded = position == expandedPosition
 
-        holder.tvInitial.text = if (user.firstname.isNotEmpty()) user.firstname.take(1).uppercase() else "U"
+        if (!user.profilePhoto.isNullOrEmpty()) {
+            val file = File(user.profilePhoto)
+            if (file.exists()) {
+                holder.ivAvatar.clearColorFilter()
+                holder.ivAvatar.setImageURI(Uri.fromFile(file))
+                holder.ivAvatar.visibility = View.VISIBLE
+                holder.tvInitial.visibility = View.GONE
+            } else {
+                holder.ivAvatar.clearColorFilter()
+                holder.ivAvatar.setImageURI(Uri.parse(user.profilePhoto))
+                holder.ivAvatar.visibility = View.VISIBLE
+                holder.tvInitial.visibility = View.GONE
+            }
+        } else {
+            holder.ivAvatar.visibility = View.GONE
+            holder.tvInitial.visibility = View.VISIBLE
+            holder.tvInitial.text = if (user.firstname.isNotEmpty()) user.firstname.take(1).uppercase() else "U"
+        }
+
         holder.tvName.text = user.fullName
         holder.tvEmail.text = user.email
         holder.tvPhone.text = "Tel: ${user.phone}"

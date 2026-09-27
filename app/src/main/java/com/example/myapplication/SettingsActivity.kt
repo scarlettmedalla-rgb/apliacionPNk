@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.RelativeLayout
@@ -38,7 +39,7 @@ class SettingsActivity : AppCompatActivity() {
         val switchDarkMode = findViewById<SwitchMaterial>(R.id.switch_dark_mode)
         val btnLanguage = findViewById<RelativeLayout>(R.id.btn_setting_language)
         val btnAbout = findViewById<RelativeLayout>(R.id.btn_setting_about)
-        val btnClearCache = findViewById<MaterialButton>(R.id.btn_clear_cache)
+        val btnLogout = findViewById<MaterialButton>(R.id.btn_logout)
 
         btnBack.setOnClickListener { finish() }
 
@@ -75,15 +76,24 @@ class SettingsActivity : AppCompatActivity() {
             )
         }
 
-        btnClearCache.setOnClickListener {
+        // Functional Logout Behavior
+        btnLogout.setOnClickListener {
             SweetAlertHelper.showConfirmation(
                 context = this,
-                title = "¿Limpiar Caché?",
-                message = "¿Deseas eliminar la memoria caché temporal de lecturas?",
-                confirmText = "Sí, Limpiar",
+                title = "¿Cerrar Sesión?",
+                message = "¿Estás seguro de que deseas salir de tu cuenta en SmartTemp?",
+                confirmText = "Sí, Cerrar Sesión",
                 cancelText = "Cancelar",
                 onConfirm = {
-                    SweetAlertHelper.showSuccess(this, "Caché Limpia", "Memoria caché de sensores liberada.")
+                    // Clear Session State
+                    val userPrefs = getSharedPreferences("smarttemp_user_session", Context.MODE_PRIVATE)
+                    userPrefs.edit().clear().apply()
+
+                    // Redirect to Login Screen and clear back stack
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
                 }
             )
         }
