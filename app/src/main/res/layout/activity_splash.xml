@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/splash_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_bg"
+    tools:context=".SplashActivity">
+
+    <!-- Pastel Blue Outer Pulse Ring 2 -->
+    <View
+        android:id="@+id/pulse_ring_2"
+        android:layout_width="190dp"
+        android:layout_height="190dp"
+        android:alpha="0"
+        android:background="@drawable/bg_circle_blue_pulse"
+        app:layout_constraintBottom_toBottomOf="@+id/card_splash_logo"
+        app:layout_constraintEnd_toEndOf="@+id/card_splash_logo"
+        app:layout_constraintStart_toStartOf="@+id/card_splash_logo"
+        app:layout_constraintTop_toTopOf="@+id/card_splash_logo" />
+
+    <!-- Pastel Pink Outer Pulse Ring 1 -->
+    <View
+        android:id="@+id/pulse_ring_1"
+        android:layout_width="185dp"
+        android:layout_height="185dp"
+        android:alpha="0"
+        android:background="@drawable/bg_circle_pink_pulse"
+        app:layout_constraintBottom_toBottomOf="@+id/card_splash_logo"
+        app:layout_constraintEnd_toEndOf="@+id/card_splash_logo"
+        app:layout_constraintStart_toStartOf="@+id/card_splash_logo"
+        app:layout_constraintTop_toTopOf="@+id/card_splash_logo" />
+
+    <!-- Lottie Background Animation Halo -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottie_splash"
+        android:layout_width="280dp"
+        android:layout_height="280dp"
+        app:layout_constraintBottom_toBottomOf="@+id/card_splash_logo"
+        app:layout_constraintEnd_toEndOf="@+id/card_splash_logo"
+        app:layout_constraintStart_toStartOf="@+id/card_splash_logo"
+        app:layout_constraintTop_toTopOf="@+id/card_splash_logo"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/splash_animation" />
+
+    <!-- Perfectly Centered Logo Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_splash_logo"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="90dp"
+        app:cardElevation="8dp"
+        app:strokeColor="@color/pink_pastel"
+        app:strokeWidth="2dp"
+        app:layout_constraintBottom_toTopOf="@+id/tv_splash_title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed">
+
+        <ImageView
+            android:id="@+id/iv_splash_logo"
+            android:layout_width="145dp"
+            android:layout_height="145dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter"
+            android:src="@drawable/imagenapp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- App Title -->
+    <TextView
+        android:id="@+id/tv_splash_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="@string/app_name"
+        android:textColor="@color/text_dark"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/tv_splash_subtitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/card_splash_logo" />
+
+    <!-- Subtitle Status Text -->
+    <TextView
+        android:id="@+id/tv_splash_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:text="@string/splash_status_1"
+        android:textColor="@color/pink_primary"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/progress_bar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_splash_title" />
+
+    <!-- Progress Indicator -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="20dp"
+        android:indeterminateTint="@color/pink_primary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_splash_subtitle" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

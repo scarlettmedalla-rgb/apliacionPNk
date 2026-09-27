@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmartTemp</string>
+    <string name="welcome_app">¡Hola! Ingresa a SmartTemp</string>
+    <string name="splash_tagline">Monitoreo de Temperatura y Clima</string>
+
+    <string name="splash_status_1">Preparando tu experiencia SmartTemp...</string>
+    <string name="splash_status_2">Conectando con la red de sensores térmicos...</string>
+    <string name="splash_status_3">Sincronizando datos de clima en tiempo real...</string>
+    <string name="splash_status_4">¡Todo listo para ti!</string>
+
+    <string name="login_title">Bienvenido</string>
+    <string name="login_subtitle">Ingresa a tu cuenta SmartTemp</string>
+    <string name="login_user_hint">INGRESE USUARIO</string>
+    <string name="login_pass_hint">INGRESE CLAVE</string>
+    <string name="btn_ingresar">INICIAR SESIÓN</string>
+    <string name="btn_registrarme">Regístrate aquí</string>
+    <string name="no_account_prompt">¿No tienes una cuenta?</string>
+    <string name="register_here">Regístrate aquí</string>
+    <string name="btn_forgot_prompt">¿Olvidaste tu contraseña?</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="username">Correo Electrónico</string>
+    <string name="password">Clave / Contraseña</string>
+    <string name="login_btn">INICIAR SESIÓN</string>
+    <string name="guest_btn">INGRESAR COMO INVITADO</string>
+
+    <string name="title_recover_pass">RECUPERAR CONTRASEÑA</string>
+    <string name="reset_title">RECUPERAR CONTRASEÑA</string>
+    <string name="reset_desc">Ingresa tu correo para recibir el código de verificación</string>
+    <string name="hint_enter_email">INGRESE EMAIL</string>
+    <string name="btn_recuperar">RECUPERAR</string>
+    <string name="title_enter_code">INGRESE CÓDIGO</string>
+    <string name="send_code">Enviar Código</string>
+    <string name="verification_code">Código de Verificación</string>
+    <string name="verify_and_reset">Verificar y Cambiar Clave</string>
+
+    <string name="title_create_pass">CREAR CONTRASEÑAS</string>
+    <string name="hint_enter_key">INGRESE CLAVE</string>
+    <string name="hint_repeat_key">REPETIR CLAVE</string>
+    <string name="btn_crear">CREAR</string>
+
+    <string name="title_register_user">REGISTRO DE USUARIO</string>
+    <string name="register_title">REGISTRO DE USUARIO</string>
+    <string name="hint_enter_names">INGRESE NOMBRES</string>
+    <string name="hint_enter_surnames">INGRESE APELLIDOS</string>
+    <string name="btn_registrar">REGISTRARSE</string>
+    <string name="register_btn">REGISTRARSE</string>
+
+    <string name="rut">RUT (Ej: 12.345.678-9)</string>
+    <string name="user_firstname">Nombre</string>
+    <string name="user_lastname">Apellido</string>
+    <string name="user_name">Nombre completo</string>
+    <string name="user_email">Correo Electrónico</string>
+    <string name="user_phone">Número de Teléfono</string>
+    <string name="user_password">Clave de Acceso</string>
+    <string name="user_role">Rol / Cargo</string>
+
+    <string name="title_user_mgmt">GESTIÓN DE USUARIOS</string>
+    <string name="btn_ingresar_usuarios">INGRESAR USUARIOS</string>
+    <string name="btn_listar_usuarios">LISTAR USUARIOS</string>
+
+    <string name="title_list_users">LISTADO DE USUARIOS</string>
+    <string name="search_hint">Buscar por Nombre o Apellido...</string>
+
+    <string name="title_modify_user">MODIFICAR DATOS USUARIO</string>
+    <string name="btn_modificar">MODIFICAR</string>
+    <string name="btn_eliminar">ELIMINAR</string>
+
+    <string name="title_sensors_data">DATOS SENSORES</string>
+    <string name="label_humidity">HUMEDAD</string>
+    <string name="label_temp">TEMPERATURA</string>
+    <string name="sensor_name">Nombre del Sensor</string>
+    <string name="sensor_location">Localidad</string>
+    <string name="sensor_temp">Temperatura (°C)</string>
+    <string name="sensor_humidity">Humedad (%)</string>
+    <string name="simulate_btn">Simular Lectura</string>
+
+    <string name="title_devs_data">DATOS DESARROLLADOR(ES)</string>
+
+    <string name="btn_crud_usuario">CRUD USUARIO</string>
+    <string name="btn_datos_sensor">DATOS SENSOR</string>
+    <string name="btn_desarrollador">DESARROLLADOR</string>
+
+    <string name="nav_users">Usuarios</string>
+    <string name="nav_sensors">Sensores</string>
+    <string name="nav_devs">Ajustes</string>
+
+    <string name="tab_user_search">Buscar Usuarios</string>
+    <string name="tab_user_add">Ingresar Usuario</string>
+    <string name="add_user">Nuevo Usuario</string>
+    <string name="edit_user">Editar Usuario</string>
+    <string name="add_sensor">Nuevo Sensor</string>
+    <string name="edit_sensor">Editar Sensor</string>
+    <string name="thermometer_on">Encendido</string>
+    <string name="thermometer_off">Apagado</string>
+
+    <!-- Main Activity Strings -->
+    <string name="hello_prefix">¡Hola!</string>
+    <string name="greeting_night">Buenas Noches SmartTemp</string>
+    <string name="greeting_morning">Buenos Días SmartTemp</string>
+    <string name="greeting_afternoon">Buenas Tardes SmartTemp</string>
+    <string name="iot_system_status">Estado del Sistema IoT</string>
+    <string name="sensors_connected">¡Sensores Conectados!</string>
+    <string name="sensors_summary">Promedio actual: 20.6°C • Humedad 58%</string>
+    <string name="btn_see_sensors">Ver Sensores →</string>
+    <string name="sensors_by_location">Sensores por Localidad</string>
+    <string name="active_monitoring">Monitoreo Activo</string>
+    <string name="active_user_label">Usuario Activo</string>
+    <string name="active_user_name">Jorge Luis Cortés Gallardo • En Línea</string>
+    <string name="active_sensor_label">Sensor Principal Activo</string>
+    <string name="active_sensor_info">Sensor Ovalle • 23.5°C (Humedad 58%)</string>
+    <string name="dev_team_names">Jorge Cortés • Kevin Encina • Scarlett Williams</string>
+    <string name="arrow_right_symbol">›</string>
+    <string name="nav_home">Inicio</string>
+    <string name="add_new_action">Añadir Nuevo Registro</string>
+
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Eliminar</string>
+    <string name="logout">Cerrar Sesión</string>
+</resources>

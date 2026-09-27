@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Mode Palette for SmartTemp -->
+    <color name="app_bg">#121212</color>
+    <color name="white">#1E1E24</color>
+    <color name="card_bg">#1E1E24</color>
+    <color name="card_border">#2A2A36</color>
+    <color name="input_bg">#2A2A36</color>
+    <color name="search_bg">#2A2A36</color>
+
+    <!-- Pastel Pink Tones for Dark Surface -->
+    <color name="pink_card_bg">#F472B6</color>
+    <color name="pink_card_dark">#EC4899</color>
+    <color name="pink_hero_start">#E6005C</color>
+    <color name="pink_hero_end">#F472B6</color>
+
+    <color name="pink_primary">#FF80AB</color>
+    <color name="pink_primary_dark">#F472B6</color>
+    <color name="pink_pastel">#FF80AB</color>
+    <color name="pink_pastel_soft">#2A2A36</color>
+    <color name="pink_pastel_light">#2A2A36</color>
+    <color name="pink_accent">#FF4081</color>
+    <color name="pink_dark">#FF80AB</color>
+
+    <!-- Pastel Blue & Purple Tones -->
+    <color name="pastel_blue">#38BDF8</color>
+    <color name="pastel_blue_soft">#2A2A36</color>
+    <color name="pastel_blue_light">#2A2A36</color>
+    <color name="pastel_blue_dark">#38BDF8</color>
+    <color name="pastel_sky">#7DD3FC</color>
+    <color name="pastel_purple">#C084FC</color>
+
+    <color name="red_primary">#FF80AB</color>
+    <color name="red_dark">#F472B6</color>
+    <color name="navy_dark">#2A2A36</color>
+    <color name="black_button">#FF80AB</color>
+    <color name="green_success">#10B981</color>
+    <color name="green_dark">#059669</color>
+
+    <color name="text_dark">#FAFAFA</color>
+    <color name="text_secondary">#A1A1AA</color>
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_pink_light">#FCE7F3</color>
+    <color name="text_blue_light">#E0F2FE</color>
+    <color name="text_muted">#71717A</color>
+
+    <color name="black">#FFFFFF</color>
+    <color name="black_surface">#1E1E24</color>
+    <color name="status_active">#10B981</color>
+    <color name="status_inactive">#EF4444</color>
+</resources>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Soft Sweet Baby Pastel Pink & Pure White Palette -->
+    <color name="app_bg">#FFF7F9</color>
+    <color name="white">#FFFFFF</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="card_border">#FCE7F3</color>
+    <color name="input_bg">#FAFAFA</color>
+    <color name="search_bg">#FCE7F3</color>
+
+    <!-- Dominant Soft Pastel Baby Pink Tones -->
+    <color name="pink_card_bg">#F472B6</color>
+    <color name="pink_card_dark">#EC4899</color>
+    <color name="pink_hero_start">#FF80AB</color>
+    <color name="pink_hero_end">#F472B6</color>
+
+    <color name="pink_primary">#F472B6</color>
+    <color name="pink_primary_dark">#EC4899</color>
+    <color name="pink_pastel">#FF80AB</color>
+    <color name="pink_pastel_soft">#FCE7F3</color>
+    <color name="pink_pastel_light">#FFF0F5</color>
+    <color name="pink_accent">#F472B6</color>
+    <color name="pink_dark">#EC4899</color>
+
+    <!-- Pastel Blue & Purple Tones -->
+    <color name="pastel_blue">#38BDF8</color>
+    <color name="pastel_blue_soft">#BAE6FD</color>
+    <color name="pastel_blue_light">#E0F2FE</color>
+    <color name="pastel_blue_dark">#0284C7</color>
+    <color name="pastel_sky">#7DD3FC</color>
+    <color name="pastel_purple">#C084FC</color>
+
+    <color name="red_primary">#F472B6</color>
+    <color name="red_dark">#EC4899</color>
+    <color name="navy_dark">#111827</color>
+    <color name="black_button">#111827</color>
+    <color name="green_success">#10B981</color>
+    <color name="green_dark">#047857</color>
+
+    <color name="text_dark">#111827</color>
+    <color name="text_secondary">#4B5563</color>
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_pink_light">#FCE7F3</color>
+    <color name="text_blue_light">#E0F2FE</color>
+    <color name="text_muted">#6B7280</color>
+
+    <color name="black">#FF000000</color>
+    <color name="black_surface">#111827</color>
+    <color name="status_active">#10B981</color>
+    <color name="status_inactive">#EF4444</color>
+</resources>
