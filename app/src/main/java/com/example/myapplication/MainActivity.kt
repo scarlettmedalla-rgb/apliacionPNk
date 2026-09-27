@@ -24,7 +24,6 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.myapplication.db.DatabaseHelper
 import com.example.myapplication.util.EdgeToEdgeHelper
-import com.example.myapplication.util.ThemeHelper
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -175,8 +174,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val heroCard = findViewById<View>(R.id.card_hero_pink)
-        heroCard?.background = ThemeHelper.createHeroGradientDrawable(this)
     }
 
     private fun obtenerDatosApi() {

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
@@ -19,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.db.DatabaseHelper
 import com.example.myapplication.model.User
 import com.example.myapplication.util.EdgeToEdgeHelper
+import com.example.myapplication.util.SwipeBackHelper
 
 class UserListActivity : AppCompatActivity() {
 
@@ -68,6 +70,13 @@ class UserListActivity : AppCompatActivity() {
         })
     }
 
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onResume() {
         super.onResume()
         loadUsers(etSearch.text.toString())
@@ -100,7 +109,9 @@ class UserListActivity : AppCompatActivity() {
             holder.itemView.setOnClickListener { onItemClick(user) }
         }
 
-        override fun getItemCount(): Int = users.size
+        override fun getItemCount(): Int = itemsSize(users)
+
+        private fun itemsSize(list: List<User>): Int = list.size
 
         fun updateData(newUsers: List<User>) {
             users = newUsers

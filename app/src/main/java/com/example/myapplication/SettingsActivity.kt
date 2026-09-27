@@ -3,7 +3,6 @@ package com.example.myapplication
 import android.content.Context
 import android.os.Bundle
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -41,11 +40,6 @@ class SettingsActivity : AppCompatActivity() {
         val btnAbout = findViewById<RelativeLayout>(R.id.btn_setting_about)
         val btnClearCache = findViewById<MaterialButton>(R.id.btn_clear_cache)
 
-        val btnThemePink = findViewById<LinearLayout>(R.id.btn_theme_pink)
-        val btnThemeBlue = findViewById<LinearLayout>(R.id.btn_theme_blue)
-        val btnThemePurple = findViewById<LinearLayout>(R.id.btn_theme_purple)
-        val btnThemeGreen = findViewById<LinearLayout>(R.id.btn_theme_green)
-
         btnBack.setOnClickListener { finish() }
 
         // Load Preferences
@@ -66,35 +60,6 @@ class SettingsActivity : AppCompatActivity() {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
-        }
-
-        // Color Palette Selection Listeners with dynamic recreate
-        btnThemePink.setOnClickListener {
-            prefs.edit().putString("app_theme_palette", "pink").apply()
-            SweetAlertHelper.showSuccess(this, "Paleta Aplicada", "Se ha seleccionado el color Rosado Original.") {
-                recreate()
-            }
-        }
-
-        btnThemeBlue.setOnClickListener {
-            prefs.edit().putString("app_theme_palette", "blue").apply()
-            SweetAlertHelper.showSuccess(this, "Paleta Aplicada", "Se ha seleccionado la paleta Celeste Pastel.") {
-                recreate()
-            }
-        }
-
-        btnThemePurple.setOnClickListener {
-            prefs.edit().putString("app_theme_palette", "purple").apply()
-            SweetAlertHelper.showSuccess(this, "Paleta Aplicada", "Se ha seleccionado la paleta Morado Violeta.") {
-                recreate()
-            }
-        }
-
-        btnThemeGreen.setOnClickListener {
-            prefs.edit().putString("app_theme_palette", "green").apply()
-            SweetAlertHelper.showSuccess(this, "Paleta Aplicada", "Se ha seleccionado la paleta Verde Esmeralda.") {
-                recreate()
             }
         }
 
@@ -122,5 +87,12 @@ class SettingsActivity : AppCompatActivity() {
                 }
             )
         }
+    }
+
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
     }
 }

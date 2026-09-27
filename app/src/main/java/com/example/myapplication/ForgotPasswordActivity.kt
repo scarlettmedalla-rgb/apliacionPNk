@@ -19,6 +19,13 @@ class ForgotPasswordActivity : AppCompatActivity() {
 
     private var countDownTimer: CountDownTimer? = null
 
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

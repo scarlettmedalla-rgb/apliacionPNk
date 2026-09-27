@@ -17,6 +17,13 @@ class ModifyUserActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private var userId: Int = -1
 
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

@@ -275,4 +275,15 @@ class RegisterActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    override fun onResume() {
+        super.onResume()
+    }
 }

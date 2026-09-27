@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -25,6 +26,7 @@ import com.example.myapplication.db.DatabaseHelper
 import com.example.myapplication.model.Sensor
 import com.example.myapplication.util.EdgeToEdgeHelper
 import com.example.myapplication.util.SweetAlertHelper
+import com.example.myapplication.util.SwipeBackHelper
 import org.json.JSONException
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -87,6 +89,17 @@ class SensorsActivity : AppCompatActivity() {
         mHandler.post(refrescar)
 
         loadSensors()
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    override fun onResume() {
+        super.onResume()
     }
 
     private fun fechahora(): String {

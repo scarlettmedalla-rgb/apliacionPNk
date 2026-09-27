@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -9,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.adapter.DeveloperAdapter
 import com.example.myapplication.model.Developer
+import com.example.myapplication.util.SwipeBackHelper
 
 class DevelopersActivity : AppCompatActivity() {
 
@@ -60,5 +62,12 @@ class DevelopersActivity : AppCompatActivity() {
         )
 
         rvDevs.adapter = DeveloperAdapter(devList)
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
     }
 }

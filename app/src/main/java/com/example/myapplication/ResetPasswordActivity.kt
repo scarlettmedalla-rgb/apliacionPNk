@@ -13,6 +13,13 @@ import com.google.android.material.textfield.TextInputEditText
 
 class ResetPasswordActivity : AppCompatActivity() {
 
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

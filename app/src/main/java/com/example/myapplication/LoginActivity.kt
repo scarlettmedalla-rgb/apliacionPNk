@@ -33,6 +33,13 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var layoutInitialView: ConstraintLayout
     private lateinit var layoutLoginForm: ConstraintLayout
 
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -190,6 +197,10 @@ class LoginActivity : AppCompatActivity() {
             val intent = Intent(this, ForgotPasswordActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
     }
 
     override fun onNewIntent(intent: Intent?) {
