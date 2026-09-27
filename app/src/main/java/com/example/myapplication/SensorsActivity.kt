@@ -25,6 +25,7 @@ import com.example.myapplication.adapter.SensorAdapter
 import com.example.myapplication.db.DatabaseHelper
 import com.example.myapplication.model.Sensor
 import com.example.myapplication.util.EdgeToEdgeHelper
+import com.example.myapplication.util.FlashlightManager
 import com.example.myapplication.util.SweetAlertHelper
 import com.example.myapplication.util.SwipeBackHelper
 import org.json.JSONException
@@ -42,6 +43,7 @@ class SensorsActivity : AppCompatActivity() {
     private var tvPinkHeroTime: TextView? = null
     private var tvPinkHeroTemp: TextView? = null
     private var tvPinkHeroHum: TextView? = null
+    private var btnFlashlight: ImageButton? = null
 
     private lateinit var datos: RequestQueue
     private val mHandler = Handler(Looper.getMainLooper())
@@ -70,13 +72,19 @@ class SensorsActivity : AppCompatActivity() {
         tvPinkHeroTime = findViewById(R.id.tv_pink_hero_time)
         tvPinkHeroTemp = findViewById(R.id.tv_pink_hero_temp)
         tvPinkHeroHum = findViewById(R.id.tv_pink_hero_hum)
+        btnFlashlight = findViewById(R.id.btn_toggle_flashlight)
 
-        val btnBack = findViewById<ImageButton>(R.id.btn_sensors_back)
         val btnAddSensor = findViewById<ImageButton>(R.id.btn_add_sensor_action)
         rvSensors = findViewById(R.id.rv_sensors_list)
         rvSensors.layoutManager = LinearLayoutManager(this)
 
-        btnBack.setOnClickListener { finish() }
+        val localBtnFlashlight = btnFlashlight
+        localBtnFlashlight?.setOnClickListener {
+            val success = FlashlightManager.toggleFlashlight(this)
+            if (success) {
+                updateFlashlightButtonState(localBtnFlashlight, FlashlightManager.isTorchOn())
+            }
+        }
 
         btnAddSensor.setOnClickListener {
             showAddSensorDialog()
@@ -100,6 +108,23 @@ class SensorsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        btnFlashlight?.let {
+            updateFlashlightButtonState(it, FlashlightManager.isTorchOn())
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mHandler.removeCallbacks(refrescar)
+        FlashlightManager.turnOff(this)
+    }
+
+    private fun updateFlashlightButtonState(btn: ImageButton, isOn: Boolean) {
+        if (isOn) {
+            btn.setBackgroundResource(R.drawable.bg_circle_flashlight_on)
+        } else {
+            btn.setBackgroundResource(R.drawable.bg_circle_flashlight)
+        }
     }
 
     private fun fechahora(): String {
@@ -133,11 +158,6 @@ class SensorsActivity : AppCompatActivity() {
             }
         )
         datos.add(request)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mHandler.removeCallbacks(refrescar)
     }
 
     private fun loadSensors() {
