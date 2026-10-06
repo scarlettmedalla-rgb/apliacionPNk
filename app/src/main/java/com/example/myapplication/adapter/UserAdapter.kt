@@ -50,19 +50,42 @@ class UserAdapter(
         val context = holder.itemView.context
         val isExpanded = position == expandedPosition
 
-        if (!user.profilePhoto.isNullOrEmpty()) {
-            val file = File(user.profilePhoto)
+        val photoToLoad = if (!user.profilePhoto.isNullOrEmpty()) {
+            user.profilePhoto
+        } else if (user.email.contains("jorge", ignoreCase = true) || user.firstname.contains("Jorge", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.jorge_cortes}"
+        } else if (user.email.contains("kevin", ignoreCase = true) || user.firstname.contains("Kevin", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.kevin_encina}"
+        } else if (user.email.contains("scarlett", ignoreCase = true) || user.firstname.contains("Scarlett", ignoreCase = true) || user.firstname.contains("Scar", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.scarlett_williams}"
+        } else {
+            null
+        }
+
+        if (!photoToLoad.isNullOrEmpty()) {
+            val file = File(photoToLoad)
+            holder.ivAvatar.clearColorFilter()
+            holder.ivAvatar.imageTintList = null
+            holder.ivAvatar.setPadding(0, 0, 0, 0)
+            holder.ivAvatar.scaleType = ImageView.ScaleType.CENTER_CROP
+
             if (file.exists()) {
-                holder.ivAvatar.clearColorFilter()
                 holder.ivAvatar.setImageURI(Uri.fromFile(file))
-                holder.ivAvatar.visibility = View.VISIBLE
-                holder.tvInitial.visibility = View.GONE
             } else {
-                holder.ivAvatar.clearColorFilter()
-                holder.ivAvatar.setImageURI(Uri.parse(user.profilePhoto))
-                holder.ivAvatar.visibility = View.VISIBLE
-                holder.tvInitial.visibility = View.GONE
+                val uri = Uri.parse(photoToLoad)
+                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
+                    holder.ivAvatar.setImageURI(uri)
+                } else {
+                    val resId = context.resources.getIdentifier(photoToLoad, "drawable", context.packageName)
+                    if (resId != 0) {
+                        holder.ivAvatar.setImageResource(resId)
+                    } else {
+                        holder.ivAvatar.setImageURI(uri)
+                    }
+                }
             }
+            holder.ivAvatar.visibility = View.VISIBLE
+            holder.tvInitial.visibility = View.GONE
         } else {
             holder.ivAvatar.visibility = View.GONE
             holder.tvInitial.visibility = View.VISIBLE
@@ -99,8 +122,8 @@ class UserAdapter(
             if (expandedPosition != -1) notifyItemChanged(expandedPosition)
         }
 
-        holder.btnEdit.setOnClickListener { onEditClick(user) }
-        holder.btnDelete.setOnClickListener { onDeleteClick(user) }
+        holder.btnEdit.visibility = View.GONE
+        holder.btnDelete.visibility = View.GONE
     }
 
     override fun getItemCount(): Int = users.size

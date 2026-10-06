@@ -32,20 +32,47 @@ class DeveloperAdapter(
 
     override fun onBindViewHolder(holder: DevViewHolder, position: Int) {
         val dev = developers[position]
+        val context = holder.itemView.context
+
         holder.tvName.text = dev.name
         holder.tvRole.text = dev.role
         holder.tvDesc.text = dev.description
         holder.tvEmail.text = "✉ ${dev.email}"
         holder.tvGithub.text = "🔗 ${dev.github}"
 
-        if (!dev.photoUri.isNullOrEmpty()) {
-            val file = File(dev.photoUri)
+        val photoUri = if (!dev.photoUri.isNullOrEmpty()) {
+            dev.photoUri
+        } else if (dev.id == 1 || dev.name.contains("Jorge", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.jorge_cortes}"
+        } else if (dev.id == 2 || dev.name.contains("Kevin", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.kevin_encina}"
+        } else if (dev.id == 3 || dev.name.contains("Scarlett", ignoreCase = true) || dev.name.contains("Scar", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.scarlett_williams}"
+        } else {
+            null
+        }
+
+        if (!photoUri.isNullOrEmpty()) {
+            val file = File(photoUri)
+            holder.ivAvatar.clearColorFilter()
+            holder.ivAvatar.imageTintList = null
+            holder.ivAvatar.setPadding(0, 0, 0, 0)
+            holder.ivAvatar.scaleType = ImageView.ScaleType.CENTER_CROP
+
             if (file.exists()) {
-                holder.ivAvatar.clearColorFilter()
                 holder.ivAvatar.setImageURI(Uri.fromFile(file))
             } else {
-                holder.ivAvatar.clearColorFilter()
-                holder.ivAvatar.setImageURI(Uri.parse(dev.photoUri))
+                val uri = Uri.parse(photoUri)
+                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
+                    holder.ivAvatar.setImageURI(uri)
+                } else {
+                    val resId = context.resources.getIdentifier(photoUri, "drawable", context.packageName)
+                    if (resId != 0) {
+                        holder.ivAvatar.setImageResource(resId)
+                    } else {
+                        holder.ivAvatar.setImageURI(uri)
+                    }
+                }
             }
         }
 

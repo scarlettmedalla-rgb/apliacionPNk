@@ -85,6 +85,9 @@ class DeveloperProfileActivity : AppCompatActivity() {
         val btnChangePhoto = findViewById<MaterialButton>(R.id.btn_dev_change_photo)
         val btnSave = findViewById<MaterialButton>(R.id.btn_dev_profile_save)
 
+        btnChangePhoto?.visibility = android.view.View.GONE
+        btnSave?.visibility = android.view.View.GONE
+
         currentDeveloper?.let { dev ->
             tvDevName.text = dev.name
             tvDevRole.text = dev.role
@@ -95,27 +98,38 @@ class DeveloperProfileActivity : AppCompatActivity() {
             selectedPhotoPath = dev.photoUri
             if (!selectedPhotoPath.isNullOrEmpty()) {
                 displayPhoto(selectedPhotoPath!!)
+            } else if (dev.id == 1 || dev.name.contains("Jorge", ignoreCase = true)) {
+                displayPhoto("android.resource://$packageName/${R.drawable.jorge_cortes}")
+            } else if (dev.id == 2 || dev.name.contains("Kevin", ignoreCase = true)) {
+                displayPhoto("android.resource://$packageName/${R.drawable.kevin_encina}")
+            } else if (dev.id == 3 || dev.name.contains("Scarlett", ignoreCase = true) || dev.name.contains("Scar", ignoreCase = true)) {
+                displayPhoto("android.resource://$packageName/${R.drawable.scarlett_williams}")
             }
-        }
-
-        btnChangePhoto.setOnClickListener {
-            pickImageLauncher.launch("image/*")
-        }
-
-        btnSave.setOnClickListener {
-            finish()
         }
     }
 
     private fun displayPhoto(path: String) {
         try {
             val file = File(path)
+            ivDevPhoto.clearColorFilter()
+            ivDevPhoto.imageTintList = null
+            ivDevPhoto.setPadding(0, 0, 0, 0)
+            ivDevPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+
             if (file.exists()) {
-                ivDevPhoto.clearColorFilter()
                 ivDevPhoto.setImageURI(Uri.fromFile(file))
             } else {
-                ivDevPhoto.clearColorFilter()
-                ivDevPhoto.setImageURI(Uri.parse(path))
+                val uri = Uri.parse(path)
+                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
+                    ivDevPhoto.setImageURI(uri)
+                } else {
+                    val resId = resources.getIdentifier(path, "drawable", packageName)
+                    if (resId != 0) {
+                        ivDevPhoto.setImageResource(resId)
+                    } else {
+                        ivDevPhoto.setImageURI(uri)
+                    }
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()

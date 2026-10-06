@@ -35,16 +35,39 @@ class TeamDevAdapter(
         holder.tvName.text = dev.name
         holder.tvRole.text = dev.role
 
-        if (!dev.photoUri.isNullOrEmpty()) {
-            val file = File(dev.photoUri)
+        val photoUri = if (!dev.photoUri.isNullOrEmpty()) {
+            dev.photoUri
+        } else if (dev.id == 1 || dev.name.contains("Jorge", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.jorge_cortes}"
+        } else if (dev.id == 2 || dev.name.contains("Kevin", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.kevin_encina}"
+        } else if (dev.id == 3 || dev.name.contains("Scarlett", ignoreCase = true) || dev.name.contains("Scar", ignoreCase = true)) {
+            "android.resource://${context.packageName}/${R.drawable.scarlett_williams}"
+        } else {
+            null
+        }
+
+        if (!photoUri.isNullOrEmpty()) {
+            val file = File(photoUri)
+            holder.ivPhoto.clearColorFilter()
+            holder.ivPhoto.imageTintList = null
+            holder.ivPhoto.setPadding(0, 0, 0, 0)
+            holder.ivPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+
             if (file.exists()) {
-                holder.ivPhoto.clearColorFilter()
-                holder.ivPhoto.setPadding(0, 0, 0, 0)
                 holder.ivPhoto.setImageURI(Uri.fromFile(file))
             } else {
-                holder.ivPhoto.clearColorFilter()
-                holder.ivPhoto.setPadding(0, 0, 0, 0)
-                holder.ivPhoto.setImageURI(Uri.parse(dev.photoUri))
+                val uri = Uri.parse(photoUri)
+                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
+                    holder.ivPhoto.setImageURI(uri)
+                } else {
+                    val resId = context.resources.getIdentifier(photoUri, "drawable", context.packageName)
+                    if (resId != 0) {
+                        holder.ivPhoto.setImageResource(resId)
+                    } else {
+                        holder.ivPhoto.setImageURI(uri)
+                    }
+                }
             }
         } else {
             val density = context.resources.displayMetrics.density

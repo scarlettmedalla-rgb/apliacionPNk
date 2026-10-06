@@ -115,7 +115,7 @@
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <!-- Button Cambiar Foto -->
+                <!-- Button Cambiar Foto (Oculto - Solo lectura) -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_change_photo"
                     android:layout_width="wrap_content"
@@ -126,6 +126,7 @@
                     android:textColor="@color/pink_primary"
                     android:textSize="13sp"
                     android:textStyle="bold"
+                    android:visibility="gone"
                     app:backgroundTint="@color/pink_pastel_light"
                     app:cornerRadius="18dp"
                     app:strokeColor="@color/pink_primary"
@@ -210,12 +211,13 @@
                     android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Action Buttons Row: MODIFICAR / GUARDAR and ELIMINAR -->
+            <!-- Action Buttons Row (Ocultos - Solo lectura) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:visibility="gone">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_mod_modificar"

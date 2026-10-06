@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.example.myapplication.R
 import com.example.myapplication.model.Sensor
 import com.example.myapplication.model.User
 import java.text.Normalizer
@@ -77,9 +78,9 @@ class DatabaseHelper(context: Context) :
 
     private fun insertInitialData(db: SQLiteDatabase) {
         val seedUsers = listOf(
-            User(1, "", "Jorge Luis", "Cortes Gallardo", "jorge.cortes@empresa.com", "", "Clave123!"),
-            User(2, "", "Kevin", "Encina Molina", "kevin.encina@empresa.com", "", "Clave123!"),
-            User(3, "", "Scarlett", "Williams Medalla", "scarlett.williams@empresa.com", "", "Clave123!")
+            User(1, "", "Jorge Luis", "Cortes Gallardo", "jorge.cortes@empresa.com", "", "Clave123!", profilePhoto = "android.resource://com.example.myapplication/${R.drawable.jorge_cortes}"),
+            User(2, "", "Kevin", "Encina Molina", "kevin.encina@empresa.com", "", "Clave123!", profilePhoto = "android.resource://com.example.myapplication/${R.drawable.kevin_encina}"),
+            User(3, "", "Scarlett", "Williams Medalla", "scarlett.williams@empresa.com", "", "Clave123!", profilePhoto = "android.resource://com.example.myapplication/${R.drawable.scarlett_williams}")
         )
 
         for (u in seedUsers) {

@@ -85,6 +85,23 @@ class ModifyUserActivity : AppCompatActivity() {
         val btnModificar = findViewById<MaterialButton>(R.id.btn_mod_modificar)
         val btnEliminar = findViewById<MaterialButton>(R.id.btn_mod_eliminar)
 
+        // Modo solo lectura (visualizar perfil)
+        btnChangePhoto?.visibility = android.view.View.GONE
+        btnModificar?.visibility = android.view.View.GONE
+        btnEliminar?.visibility = android.view.View.GONE
+
+        etFn.isEnabled = false
+        etFn.isFocusable = false
+        etFn.isClickable = false
+
+        etLn.isEnabled = false
+        etLn.isFocusable = false
+        etLn.isClickable = false
+
+        etEm.isEnabled = false
+        etEm.isFocusable = false
+        etEm.isClickable = false
+
         // Load existing user from database or Intent extras
         val userFromDb = if (userId != -1) dbHelper.getUserById(userId) else null
         val initialFn = userFromDb?.firstname ?: intent.getStringExtra("USER_FN") ?: ""
@@ -101,6 +118,12 @@ class ModifyUserActivity : AppCompatActivity() {
 
         if (!selectedPhotoPath.isNullOrEmpty()) {
             displayProfileImage(selectedPhotoPath!!)
+        } else if (initialEmail.contains("jorge", ignoreCase = true) || initialFn.contains("Jorge", ignoreCase = true)) {
+            displayProfileImage("android.resource://$packageName/${R.drawable.jorge_cortes}")
+        } else if (initialEmail.contains("kevin", ignoreCase = true) || initialFn.contains("Kevin", ignoreCase = true)) {
+            displayProfileImage("android.resource://$packageName/${R.drawable.kevin_encina}")
+        } else if (initialEmail.contains("scarlett", ignoreCase = true) || initialFn.contains("Scarlett", ignoreCase = true) || initialFn.contains("Scar", ignoreCase = true)) {
+            displayProfileImage("android.resource://$packageName/${R.drawable.scarlett_williams}")
         }
 
         btnChangePhoto.setOnClickListener {
@@ -206,12 +229,25 @@ class ModifyUserActivity : AppCompatActivity() {
     private fun displayProfileImage(path: String) {
         try {
             val file = File(path)
+            ivProfilePhoto.clearColorFilter()
+            ivProfilePhoto.imageTintList = null
+            ivProfilePhoto.setPadding(0, 0, 0, 0)
+            ivProfilePhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+
             if (file.exists()) {
-                ivProfilePhoto.clearColorFilter()
                 ivProfilePhoto.setImageURI(Uri.fromFile(file))
             } else {
-                ivProfilePhoto.clearColorFilter()
-                ivProfilePhoto.setImageURI(Uri.parse(path))
+                val uri = Uri.parse(path)
+                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
+                    ivProfilePhoto.setImageURI(uri)
+                } else {
+                    val resId = resources.getIdentifier(path, "drawable", packageName)
+                    if (resId != 0) {
+                        ivProfilePhoto.setImageResource(resId)
+                    } else {
+                        ivProfilePhoto.setImageURI(uri)
+                    }
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()

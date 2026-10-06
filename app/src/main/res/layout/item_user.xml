@@ -102,7 +102,8 @@
                     android:layout_height="32dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/edit"
-                    android:src="@drawable/ic_edit" />
+                    android:src="@drawable/ic_edit"
+                    android:visibility="gone" />
 
                 <ImageButton
                     android:id="@+id/btn_delete_user"
@@ -111,7 +112,8 @@
                     android:layout_marginStart="2dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/delete"
-                    android:src="@drawable/ic_delete" />
+                    android:src="@drawable/ic_delete"
+                    android:visibility="gone" />
 
                 <ImageView
                     android:id="@+id/iv_expand_arrow"
