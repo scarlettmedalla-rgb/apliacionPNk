@@ -76,6 +76,17 @@ object ValidationUtils {
     }
 
     /**
+     * Validates whether input is either a valid email or a valid username (at least 2 chars, no script injection).
+     */
+    fun isValidUsernameOrEmail(input: String?): Boolean {
+        if (input.isNullOrBlank()) return false
+        val clean = input.trim()
+        if (containsScriptOrInjection(clean)) return false
+        if (Patterns.EMAIL_ADDRESS.matcher(clean).matches()) return true
+        return clean.length >= 2 && !clean.contains(" ")
+    }
+
+    /**
      * Validates password strength and ensures no script/injection attempt.
      */
     fun isRobustPassword(password: String?): Boolean {

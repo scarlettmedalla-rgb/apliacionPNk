@@ -50,47 +50,16 @@ class UserAdapter(
         val context = holder.itemView.context
         val isExpanded = position == expandedPosition
 
-        val photoToLoad = if (!user.profilePhoto.isNullOrEmpty()) {
-            user.profilePhoto
-        } else if (user.email.contains("jorge", ignoreCase = true) || user.firstname.contains("Jorge", ignoreCase = true)) {
-            "android.resource://${context.packageName}/${R.drawable.jorge_cortes}"
-        } else if (user.email.contains("kevin", ignoreCase = true) || user.firstname.contains("Kevin", ignoreCase = true)) {
-            "android.resource://${context.packageName}/${R.drawable.kevin_encina}"
-        } else if (user.email.contains("scarlett", ignoreCase = true) || user.firstname.contains("Scarlett", ignoreCase = true) || user.firstname.contains("Scar", ignoreCase = true)) {
-            "android.resource://${context.packageName}/${R.drawable.scarlett_williams}"
-        } else {
-            null
+        val defaultRes = when {
+            user.email.contains("jorge", ignoreCase = true) || user.firstname.contains("Jorge", ignoreCase = true) -> R.drawable.jorge_cortes
+            user.email.contains("kevin", ignoreCase = true) || user.firstname.contains("Kevin", ignoreCase = true) -> R.drawable.kevin_encina
+            user.email.contains("scarlett", ignoreCase = true) || user.firstname.contains("Scarlett", ignoreCase = true) || user.firstname.contains("Scar", ignoreCase = true) -> R.drawable.scarlett_williams
+            else -> R.drawable.ic_users
         }
 
-        if (!photoToLoad.isNullOrEmpty()) {
-            val file = File(photoToLoad)
-            holder.ivAvatar.clearColorFilter()
-            holder.ivAvatar.imageTintList = null
-            holder.ivAvatar.setPadding(0, 0, 0, 0)
-            holder.ivAvatar.scaleType = ImageView.ScaleType.CENTER_CROP
-
-            if (file.exists()) {
-                holder.ivAvatar.setImageURI(Uri.fromFile(file))
-            } else {
-                val uri = Uri.parse(photoToLoad)
-                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
-                    holder.ivAvatar.setImageURI(uri)
-                } else {
-                    val resId = context.resources.getIdentifier(photoToLoad, "drawable", context.packageName)
-                    if (resId != 0) {
-                        holder.ivAvatar.setImageResource(resId)
-                    } else {
-                        holder.ivAvatar.setImageURI(uri)
-                    }
-                }
-            }
-            holder.ivAvatar.visibility = View.VISIBLE
-            holder.tvInitial.visibility = View.GONE
-        } else {
-            holder.ivAvatar.visibility = View.GONE
-            holder.tvInitial.visibility = View.VISIBLE
-            holder.tvInitial.text = if (user.firstname.isNotEmpty()) user.firstname.take(1).uppercase() else "U"
-        }
+        holder.ivAvatar.visibility = View.VISIBLE
+        holder.tvInitial.visibility = View.GONE
+        com.example.myapplication.util.ImageHelper.loadProfilePhoto(holder.ivAvatar, user.profilePhoto, defaultRes)
 
         holder.tvName.text = user.fullName
         holder.tvEmail.text = user.email
@@ -122,8 +91,11 @@ class UserAdapter(
             if (expandedPosition != -1) notifyItemChanged(expandedPosition)
         }
 
-        holder.btnEdit.visibility = View.GONE
-        holder.btnDelete.visibility = View.GONE
+        holder.btnEdit.visibility = View.VISIBLE
+        holder.btnEdit.setOnClickListener { onEditClick(user) }
+
+        holder.btnDelete.visibility = View.VISIBLE
+        holder.btnDelete.setOnClickListener { onDeleteClick(user) }
     }
 
     override fun getItemCount(): Int = users.size

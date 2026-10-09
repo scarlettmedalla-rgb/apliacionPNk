@@ -30,7 +30,7 @@ object SweetAlertHelper {
             dialog.confirmText = confirmText
             dialog.setConfirmClickListener { d ->
                 try {
-                    (d as? SweetAlertDialog)?.dismissWithAnimation()
+                    (d as? SweetAlertDialog)?.dismiss()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -58,7 +58,7 @@ object SweetAlertHelper {
             dialog.confirmText = confirmText
             dialog.setConfirmClickListener { d ->
                 try {
-                    (d as? SweetAlertDialog)?.dismissWithAnimation()
+                    (d as? SweetAlertDialog)?.dismiss()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -86,7 +86,7 @@ object SweetAlertHelper {
             dialog.confirmText = confirmText
             dialog.setConfirmClickListener { d ->
                 try {
-                    (d as? SweetAlertDialog)?.dismissWithAnimation()
+                    (d as? SweetAlertDialog)?.dismiss()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -134,7 +134,7 @@ object SweetAlertHelper {
             dialog.cancelText = cancelText
             dialog.setConfirmClickListener { d ->
                 try {
-                    (d as? SweetAlertDialog)?.dismissWithAnimation()
+                    (d as? SweetAlertDialog)?.dismiss()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -142,7 +142,7 @@ object SweetAlertHelper {
             }
             dialog.setCancelClickListener { d ->
                 try {
-                    (d as? SweetAlertDialog)?.dismissWithAnimation()
+                    (d as? SweetAlertDialog)?.dismiss()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -160,7 +160,7 @@ object SweetAlertHelper {
         loadingTitle: String,
         successTitle: String,
         successMessage: String,
-        durationMs: Long = 1500L,
+        durationMs: Long = 1200L,
         onConfirm: (() -> Unit)? = null
     ) {
         if (isContextInvalid(context)) return
@@ -177,16 +177,36 @@ object SweetAlertHelper {
                     pDialog.titleText = successTitle
                     pDialog.contentText = successMessage
                     pDialog.confirmText = "Aceptar"
-                    pDialog.setConfirmClickListener { d ->
-                        try {
-                            (d as? SweetAlertDialog)?.dismissWithAnimation()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+
+                    var isConfirmed = false
+                    val triggerConfirm = {
+                        if (!isConfirmed) {
+                            isConfirmed = true
+                            try {
+                                pDialog.dismiss()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                            onConfirm?.invoke()
                         }
-                        onConfirm?.invoke()
                     }
+
+                    pDialog.setConfirmClickListener {
+                        triggerConfirm()
+                    }
+
+                    // Automatically transition to the next screen after 800ms
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        if (!isContextInvalid(context)) {
+                            triggerConfirm()
+                        }
+                    }, 800L)
+
                 } catch (e: Exception) {
                     e.printStackTrace()
+                    try {
+                        pDialog.dismiss()
+                    } catch (_: Exception) {}
                     onConfirm?.invoke()
                 }
             }, durationMs)

@@ -37,10 +37,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@string/app_name"
-                android:padding="8dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_users"
-                app:tint="@color/pink_primary" />
+                android:src="@drawable/ic_users" />
         </com.google.android.material.card.MaterialCardView>
 
         <!-- User Info Text Container -->

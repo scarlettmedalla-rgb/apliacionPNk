@@ -168,11 +168,11 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (!ValidationUtils.isValidEmail(username)) {
+            if (!ValidationUtils.isValidUsernameOrEmail(username)) {
                 SweetAlertHelper.showError(
                     this,
-                    "Formato Inválido",
-                    "Ingrese un correo electrónico válido."
+                    "Usuario o Email Inválido",
+                    "Por favor ingrese un usuario o correo electrónico válido."
                 )
                 return@setOnClickListener
             }
@@ -184,10 +184,10 @@ class LoginActivity : AppCompatActivity() {
                 loadingTitle = "Validando credenciales...",
                 successTitle = "¡Bienvenido!",
                 successMessage = "Inicio de sesión correcto.",
-                durationMs = 1500
+                durationMs = 1200
             ) {
                 btnLogin.isEnabled = true
-                val intent = Intent(this, MainActivity::class.java)
+                val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 startActivity(intent)
                 finish()
             }

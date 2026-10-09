@@ -40,41 +40,13 @@ class DeveloperAdapter(
         holder.tvEmail.text = "✉ ${dev.email}"
         holder.tvGithub.text = "🔗 ${dev.github}"
 
-        val photoUri = if (!dev.photoUri.isNullOrEmpty()) {
-            dev.photoUri
-        } else if (dev.id == 1 || dev.name.contains("Jorge", ignoreCase = true)) {
-            "android.resource://${context.packageName}/${R.drawable.jorge_cortes}"
-        } else if (dev.id == 2 || dev.name.contains("Kevin", ignoreCase = true)) {
-            "android.resource://${context.packageName}/${R.drawable.kevin_encina}"
-        } else if (dev.id == 3 || dev.name.contains("Scarlett", ignoreCase = true) || dev.name.contains("Scar", ignoreCase = true)) {
-            "android.resource://${context.packageName}/${R.drawable.scarlett_williams}"
-        } else {
-            null
+        val defaultRes = when {
+            dev.id == 1 || dev.name.contains("Jorge", ignoreCase = true) -> R.drawable.jorge_cortes
+            dev.id == 2 || dev.name.contains("Kevin", ignoreCase = true) -> R.drawable.kevin_encina
+            dev.id == 3 || dev.name.contains("Scarlett", ignoreCase = true) || dev.name.contains("Scar", ignoreCase = true) -> R.drawable.scarlett_williams
+            else -> R.drawable.ic_users
         }
-
-        if (!photoUri.isNullOrEmpty()) {
-            val file = File(photoUri)
-            holder.ivAvatar.clearColorFilter()
-            holder.ivAvatar.imageTintList = null
-            holder.ivAvatar.setPadding(0, 0, 0, 0)
-            holder.ivAvatar.scaleType = ImageView.ScaleType.CENTER_CROP
-
-            if (file.exists()) {
-                holder.ivAvatar.setImageURI(Uri.fromFile(file))
-            } else {
-                val uri = Uri.parse(photoUri)
-                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
-                    holder.ivAvatar.setImageURI(uri)
-                } else {
-                    val resId = context.resources.getIdentifier(photoUri, "drawable", context.packageName)
-                    if (resId != 0) {
-                        holder.ivAvatar.setImageResource(resId)
-                    } else {
-                        holder.ivAvatar.setImageURI(uri)
-                    }
-                }
-            }
-        }
+        com.example.myapplication.util.ImageHelper.loadProfilePhoto(holder.ivAvatar, dev.photoUri, defaultRes)
 
         holder.itemView.setOnClickListener {
             onItemClick?.invoke(dev)

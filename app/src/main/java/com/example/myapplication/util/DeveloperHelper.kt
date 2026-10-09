@@ -10,9 +10,9 @@ object DeveloperHelper {
     fun getDevelopers(context: Context): List<Developer> {
         val prefs = context.getSharedPreferences("smarttemp_dev_photos", Context.MODE_PRIVATE)
 
-        val defaultJorgePhoto = "android.resource://${context.packageName}/${R.drawable.jorge_cortes}"
-        val defaultKevinPhoto = "android.resource://${context.packageName}/${R.drawable.kevin_encina}"
-        val defaultScarlettPhoto = "android.resource://${context.packageName}/${R.drawable.scarlett_williams}"
+        val defaultJorgePhoto = "jorge_cortes"
+        val defaultKevinPhoto = "kevin_encina"
+        val defaultScarlettPhoto = "scarlett_williams"
 
         val savedJorgePhoto = prefs.getString("dev_photo_1", null)
         val jorgePhoto = if (!savedJorgePhoto.isNullOrEmpty() && File(savedJorgePhoto).exists()) {

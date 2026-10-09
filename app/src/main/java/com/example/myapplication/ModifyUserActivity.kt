@@ -36,7 +36,7 @@ class ModifyUserActivity : AppCompatActivity() {
             val savedPath = saveImageToInternalStorage(uri)
             if (savedPath != null) {
                 selectedPhotoPath = savedPath
-                displayProfileImage(savedPath)
+                com.example.myapplication.util.ImageHelper.loadProfilePhoto(ivProfilePhoto, savedPath)
                 SweetAlertHelper.showSuccess(this, "Vista Previa", "Imagen seleccionada correctamente. Presiona Guardar Cambios para confirmarla.")
             } else {
                 SweetAlertHelper.showError(this, "Error", "No se pudo procesar la imagen seleccionada.")
@@ -116,15 +116,13 @@ class ModifyUserActivity : AppCompatActivity() {
         val fullName = "$initialFn $initialLn".trim()
         tvProfileName.text = fullName.ifEmpty { "Usuario SmartTemp" }
 
-        if (!selectedPhotoPath.isNullOrEmpty()) {
-            displayProfileImage(selectedPhotoPath!!)
-        } else if (initialEmail.contains("jorge", ignoreCase = true) || initialFn.contains("Jorge", ignoreCase = true)) {
-            displayProfileImage("android.resource://$packageName/${R.drawable.jorge_cortes}")
-        } else if (initialEmail.contains("kevin", ignoreCase = true) || initialFn.contains("Kevin", ignoreCase = true)) {
-            displayProfileImage("android.resource://$packageName/${R.drawable.kevin_encina}")
-        } else if (initialEmail.contains("scarlett", ignoreCase = true) || initialFn.contains("Scarlett", ignoreCase = true) || initialFn.contains("Scar", ignoreCase = true)) {
-            displayProfileImage("android.resource://$packageName/${R.drawable.scarlett_williams}")
+        val defaultRes = when {
+            initialEmail.contains("jorge", ignoreCase = true) || initialFn.contains("Jorge", ignoreCase = true) -> R.drawable.jorge_cortes
+            initialEmail.contains("kevin", ignoreCase = true) || initialFn.contains("Kevin", ignoreCase = true) -> R.drawable.kevin_encina
+            initialEmail.contains("scarlett", ignoreCase = true) || initialFn.contains("Scarlett", ignoreCase = true) || initialFn.contains("Scar", ignoreCase = true) -> R.drawable.scarlett_williams
+            else -> R.drawable.ic_users
         }
+        com.example.myapplication.util.ImageHelper.loadProfilePhoto(ivProfilePhoto, selectedPhotoPath, defaultRes)
 
         btnChangePhoto.setOnClickListener {
             pickImageLauncher.launch("image/*")
@@ -226,34 +224,7 @@ class ModifyUserActivity : AppCompatActivity() {
         }
     }
 
-    private fun displayProfileImage(path: String) {
-        try {
-            val file = File(path)
-            ivProfilePhoto.clearColorFilter()
-            ivProfilePhoto.imageTintList = null
-            ivProfilePhoto.setPadding(0, 0, 0, 0)
-            ivProfilePhoto.scaleType = ImageView.ScaleType.CENTER_CROP
 
-            if (file.exists()) {
-                ivProfilePhoto.setImageURI(Uri.fromFile(file))
-            } else {
-                val uri = Uri.parse(path)
-                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
-                    ivProfilePhoto.setImageURI(uri)
-                } else {
-                    val resId = resources.getIdentifier(path, "drawable", packageName)
-                    if (resId != 0) {
-                        ivProfilePhoto.setImageResource(resId)
-                    } else {
-                        ivProfilePhoto.setImageURI(uri)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            ivProfilePhoto.setImageResource(R.drawable.ic_users)
-        }
-    }
 
     private fun saveImageToInternalStorage(uri: Uri): String? {
         return try {

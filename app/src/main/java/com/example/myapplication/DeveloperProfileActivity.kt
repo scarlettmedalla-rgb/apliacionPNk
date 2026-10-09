@@ -36,7 +36,7 @@ class DeveloperProfileActivity : AppCompatActivity() {
             val savedPath = saveImageToInternalStorage(uri)
             if (savedPath != null) {
                 selectedPhotoPath = savedPath
-                displayPhoto(savedPath)
+                com.example.myapplication.util.ImageHelper.loadProfilePhoto(ivDevPhoto, savedPath)
                 DeveloperHelper.saveDeveloperPhoto(this, devId, savedPath)
                 SweetAlertHelper.showSuccess(this, "¡Foto Guardada!", "La foto de perfil del desarrollador ha sido actualizada.")
             } else {
@@ -96,44 +96,13 @@ class DeveloperProfileActivity : AppCompatActivity() {
             tvDevGithub.text = "🔗 ${dev.github}"
 
             selectedPhotoPath = dev.photoUri
-            if (!selectedPhotoPath.isNullOrEmpty()) {
-                displayPhoto(selectedPhotoPath!!)
-            } else if (dev.id == 1 || dev.name.contains("Jorge", ignoreCase = true)) {
-                displayPhoto("android.resource://$packageName/${R.drawable.jorge_cortes}")
-            } else if (dev.id == 2 || dev.name.contains("Kevin", ignoreCase = true)) {
-                displayPhoto("android.resource://$packageName/${R.drawable.kevin_encina}")
-            } else if (dev.id == 3 || dev.name.contains("Scarlett", ignoreCase = true) || dev.name.contains("Scar", ignoreCase = true)) {
-                displayPhoto("android.resource://$packageName/${R.drawable.scarlett_williams}")
+            val defaultRes = when {
+                dev.id == 1 || dev.name.contains("Jorge", ignoreCase = true) -> R.drawable.jorge_cortes
+                dev.id == 2 || dev.name.contains("Kevin", ignoreCase = true) -> R.drawable.kevin_encina
+                dev.id == 3 || dev.name.contains("Scarlett", ignoreCase = true) || dev.name.contains("Scar", ignoreCase = true) -> R.drawable.scarlett_williams
+                else -> R.drawable.ic_users
             }
-        }
-    }
-
-    private fun displayPhoto(path: String) {
-        try {
-            val file = File(path)
-            ivDevPhoto.clearColorFilter()
-            ivDevPhoto.imageTintList = null
-            ivDevPhoto.setPadding(0, 0, 0, 0)
-            ivDevPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
-
-            if (file.exists()) {
-                ivDevPhoto.setImageURI(Uri.fromFile(file))
-            } else {
-                val uri = Uri.parse(path)
-                if (uri.scheme == "android.resource" || uri.scheme == "content" || uri.scheme == "file") {
-                    ivDevPhoto.setImageURI(uri)
-                } else {
-                    val resId = resources.getIdentifier(path, "drawable", packageName)
-                    if (resId != 0) {
-                        ivDevPhoto.setImageResource(resId)
-                    } else {
-                        ivDevPhoto.setImageURI(uri)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            ivDevPhoto.setImageResource(R.drawable.ic_users)
+            com.example.myapplication.util.ImageHelper.loadProfilePhoto(ivDevPhoto, dev.photoUri, defaultRes)
         }
     }
 

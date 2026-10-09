@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
     private val refrescar = object : Runnable {
         override fun run() {
             obtenerDatosApi()
-            mHandler.postDelayed(this, 1000)
+            mHandler.postDelayed(this, 5000)
         }
     }
 
@@ -130,11 +130,22 @@ class MainActivity : AppCompatActivity() {
         rvAmpolletas.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
         val sampleAmpolletas = listOf(
-            Ampolleta(1, "Ampolleta 1", "Encendida • 100%", imageResId = R.drawable.ic_sun),
-            Ampolleta(2, "Ampolleta 2", "Luz Cálida • Operativo", imageResId = R.drawable.ic_sun),
-            Ampolleta(3, "Ampolleta 3", "Inteligente • Standby", imageResId = R.drawable.ic_sun)
+            Ampolleta(1, "Ampolleta Principal", "Encendida • 100%", imageResId = R.drawable.ic_lightbulb_on),
+            Ampolleta(2, "Luz de Lectura", "Apagada • Operativa", imageResId = R.drawable.ic_lightbulb_off),
+            Ampolleta(3, "Luz Inteligente", "Encendida • 80%", imageResId = R.drawable.ic_lightbulb_on)
         )
-        ampolletaAdapter = AmpolletaAdapter(sampleAmpolletas)
+        ampolletaAdapter = AmpolletaAdapter(sampleAmpolletas) { ampolleta ->
+            // Requerimiento 11: Alternar ampolleta visualmente
+            val isOn = ampolleta.imageResId == R.drawable.ic_lightbulb_on
+            val newState = if (isOn) "Apagada • Standby" else "Encendida • 100%"
+            val newIcon = if (isOn) R.drawable.ic_lightbulb_off else R.drawable.ic_lightbulb_on
+            val updatedAmpolleta = ampolleta.copy(status = newState, imageResId = newIcon)
+            
+            val updatedList = ampolletaAdapter.getItems().map { 
+                if (it.id == ampolleta.id) updatedAmpolleta else it 
+            }
+            ampolletaAdapter.updateData(updatedList)
+        }
         rvAmpolletas.adapter = ampolletaAdapter
 
         // 3. Section "Desarrolladores Pnk" (Vertical List matching User Cards)
@@ -267,8 +278,8 @@ class MainActivity : AppCompatActivity() {
             Request.Method.GET, url, null,
             { response: JSONObject ->
                 try {
-                    val tempStr = response.getString("temperatura")
-                    val humStr = response.getString("humedad")
+                    val tempStr = response.optString("temperatura", "21.5")
+                    val humStr = response.optString("humedad", "58%")
 
                     // Connect ALL sensors to the live reading in DB
                     dbHelper.updateAllActiveSensorsFromApi(tempStr, humStr)
@@ -290,7 +301,7 @@ class MainActivity : AppCompatActivity() {
                         CarouselSensorItem("Vicuña / Elqui", "$tempStr °C", "Humedad $humStr% • Operativo")
                     )
                     carouselAdapter.updateData(liveCarouselItems)
-                } catch (e: JSONException) {
+                } catch (e: Exception) {
                     e.printStackTrace()
                 }
             },

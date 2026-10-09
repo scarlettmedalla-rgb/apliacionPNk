@@ -59,6 +59,8 @@ class AmpolletaAdapter(
 
     override fun getItemCount(): Int = items.size
 
+    fun getItems(): List<Ampolleta> = items
+
     fun updateData(newItems: List<Ampolleta>) {
         items = newItems
         notifyDataSetChanged()

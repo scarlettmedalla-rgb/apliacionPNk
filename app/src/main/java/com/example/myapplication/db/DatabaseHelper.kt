@@ -78,9 +78,9 @@ class DatabaseHelper(context: Context) :
 
     private fun insertInitialData(db: SQLiteDatabase) {
         val seedUsers = listOf(
-            User(1, "", "Jorge Luis", "Cortes Gallardo", "jorge.cortes@empresa.com", "", "Clave123!", profilePhoto = "android.resource://com.example.myapplication/${R.drawable.jorge_cortes}"),
-            User(2, "", "Kevin", "Encina Molina", "kevin.encina@empresa.com", "", "Clave123!", profilePhoto = "android.resource://com.example.myapplication/${R.drawable.kevin_encina}"),
-            User(3, "", "Scarlett", "Williams Medalla", "scarlett.williams@empresa.com", "", "Clave123!", profilePhoto = "android.resource://com.example.myapplication/${R.drawable.scarlett_williams}")
+            User(1, "", "Jorge Luis", "Cortes Gallardo", "jorge.cortes@empresa.com", "", "Clave123!", profilePhoto = "jorge_cortes"),
+            User(2, "", "Kevin", "Encina Molina", "kevin.encina@empresa.com", "", "Clave123!", profilePhoto = "kevin_encina"),
+            User(3, "", "Scarlett", "Williams Medalla", "scarlett.williams@empresa.com", "", "Clave123!", profilePhoto = "scarlett_williams")
         )
 
         for (u in seedUsers) {
