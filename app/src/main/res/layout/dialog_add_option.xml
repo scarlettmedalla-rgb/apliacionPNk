@@ -58,16 +58,18 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_dialog_easter_egg"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_width="64dp"
+        android:layout_height="48dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/pink_primary"
+        android:elevation="4dp"
         android:text="¿?"
-        android:textColor="@color/pink_primary"
-        android:textSize="18sp"
+        android:textColor="@color/white"
+        android:textSize="20sp"
         android:textStyle="bold"
-        android:contentDescription="Abrir escena secreta" />
+        android:contentDescription="Abrir escena secreta"
+        app:cornerRadius="24dp" />
 
     <!-- Option 1: Registrar Nuevo Usuario -->
     <com.google.android.material.button.MaterialButton

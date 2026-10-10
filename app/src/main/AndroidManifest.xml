@@ -15,7 +15,7 @@
         android:roundIcon="@drawable/imagenapp"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
-        <activity android:name=".EasterEggActivity" android:screenOrientation="landscape" />
+        <activity android:name=".EasterEggActivity" android:screenOrientation="portrait" />
 
         <!-- Screen 1: Splash Activity (7.0 seconds with Lottie) -->
         <activity
