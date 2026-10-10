@@ -12,12 +12,19 @@ import androidx.appcompat.app.AppCompatActivity
 class EasterEggActivity : AppCompatActivity() {
     private var player: MediaPlayer? = null
     private var view: EasterEggView? = null
+    private lateinit var envelope: EggVoiceEnvelope
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         window.decorView.systemUiVisibility = 5894
-        view = EasterEggView(this, ::playAudioIfBundled, ::vibrateOnce)
+        envelope = EggVoiceEnvelope(applicationContext)
+        view = EasterEggView(this, ::playAudioIfBundled, ::vibrateOnce, {
+            player?.release()
+            player = null
+        }, {
+            player?.let { if (it.isPlaying) envelope.levelAt(it.currentPosition) else 0f } ?: 0f
+        }, { player?.isPlaying == true })
         setContentView(view!!)
     }
 
@@ -39,7 +46,21 @@ class EasterEggActivity : AppCompatActivity() {
         else @Suppress("DEPRECATION") vibrator.vibrate(70)
     }
 
+    override fun onResume() {
+        super.onResume()
+        view?.resumeScene()
+        player?.start()
+    }
+
+    override fun onPause() {
+        view?.pauseScene()
+        player?.pause()
+        super.onPause()
+    }
+
     override fun onDestroy() {
+        envelope.close()
+        view?.release()
         player?.release()
         player = null
         view = null
