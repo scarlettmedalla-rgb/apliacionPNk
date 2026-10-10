@@ -328,9 +328,15 @@ class MainActivity : AppCompatActivity() {
         val btnClose = view.findViewById<ImageButton>(R.id.btn_dialog_close)
         val btnAddUser = view.findViewById<MaterialButton>(R.id.btn_dialog_add_user)
         val btnAddSensor = view.findViewById<MaterialButton>(R.id.btn_dialog_add_sensor)
+        val btnEasterEgg = view.findViewById<MaterialButton>(R.id.btn_dialog_easter_egg)
 
         btnClose?.setOnClickListener {
             dialog.dismiss()
+        }
+
+        btnEasterEgg?.setOnClickListener {
+            dialog.dismiss()
+            startActivity(Intent(this, EasterEggActivity::class.java))
         }
 
         btnAddUser?.setOnClickListener {
