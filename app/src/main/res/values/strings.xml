@@ -44,6 +44,7 @@
     <string name="hint_enter_names">INGRESE NOMBRES</string>
     <string name="hint_enter_surnames">INGRESE APELLIDOS</string>
     <string name="btn_registrar">REGISTRARSE</string>
+    <string name="easter_egg_title">¿Se sacaron un 7?</string>
     <string name="register_btn">REGISTRARSE</string>
 
     <string name="rut">RUT (Ej: 12.345.678-9)</string>

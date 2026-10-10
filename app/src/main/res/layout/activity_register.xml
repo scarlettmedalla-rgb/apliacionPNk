@@ -67,6 +67,18 @@
                 android:text="en SmartTemp • Registro de Usuario"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_easter_egg"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="4dp"
+                android:text="¿?"
+                android:textColor="@color/pink_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:contentDescription="Abrir escena secreta" />
         </LinearLayout>
 
         <!-- Bottom Pastel Pink Rounded Container (Wrap Content so nothing is ever cut off) -->

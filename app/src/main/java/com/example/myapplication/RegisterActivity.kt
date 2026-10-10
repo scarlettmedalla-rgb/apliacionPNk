@@ -90,6 +90,9 @@ class RegisterActivity : AppCompatActivity() {
         val ivPass2Toggle = findViewById<ImageView>(R.id.iv_reg_pass2_toggle)
         val btnRegistrar = findViewById<MaterialButton>(R.id.btn_reg_registrar)
         val tvAlreadyAccount = findViewById<TextView>(R.id.tv_already_account)
+        findViewById<MaterialButton>(R.id.btn_easter_egg)?.setOnClickListener {
+            startActivity(Intent(this, EasterEggActivity::class.java))
+        }
 
         // Auto-scroll focused input box smoothly above the soft keyboard
         val focusAutoScrollListener = View.OnFocusChangeListener { v, hasFocus ->
