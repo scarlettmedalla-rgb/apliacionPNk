@@ -64,7 +64,7 @@ class EasterEggView(context: Context, private val audio: () -> Unit, private val
         val now = SystemClock.uptimeMillis()
         val dt = if (previous == 0L || !active) 0f else ((now-previous)/1000f).coerceAtMost(.05f)
         previous = now; time += dt; world += dt
-        if((scene==Scene.ANGRY || scene==Scene.DARK) && !voiceStarted && time>(if(scene==Scene.DARK) .4f else .12f)) {
+        if(scene==Scene.ANGRY && !voiceStarted && time>.12f) {
             voiceStarted=true
             if(sound) audio()
         }

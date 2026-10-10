@@ -60,9 +60,9 @@ class EasterEggSceneTest {
             awaitState("ROCKET"); SystemClock.sleep(350); shot("rocket")
             awaitState("BOOM"); SystemClock.sleep(650); shot("explosion")
             awaitState("DARK")
-            instrumentation.runOnMainSync { assertFalse("Voice must not precede the black frame",sceneView().isVoiceStarted) }
+            instrumentation.runOnMainSync { assertFalse("Explosion branch must stay silent",sceneView().isVoiceStarted) }
             SystemClock.sleep(550)
-            instrumentation.runOnMainSync { assertTrue(sceneView().isVoiceStarted) }
+            instrumentation.runOnMainSync { assertFalse("Explosion branch must stay silent",sceneView().isVoiceStarted) }
             shot("dark")
             awaitState("QUESTION")
             tap(260f,77f)
