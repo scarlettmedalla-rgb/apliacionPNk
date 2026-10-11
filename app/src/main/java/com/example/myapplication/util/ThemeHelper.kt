@@ -114,8 +114,6 @@ object ThemeHelper {
         activity.findViewById<FloatingActionButton>(R.id.fab_add_new)?.backgroundTintList = ColorStateList.valueOf(primaryColor)
         activity.findViewById<FloatingActionButton>(R.id.fab_add_sensor)?.backgroundTintList = ColorStateList.valueOf(primaryColor)
 
-        activity.findViewById<MaterialButton>(R.id.btn_hero_sensors)?.setTextColor(primaryColor)
-
         val btnOptionRegister = activity.findViewById<MaterialButton>(R.id.btn_option_register)
         btnOptionRegister?.backgroundTintList = ColorStateList.valueOf(primaryColor)
 

@@ -9,7 +9,10 @@ data class User(
     val phone: String,
     val password: String = "",
     val role: String = "Usuario",
-    val profilePhoto: String? = null
+    val profilePhoto: String? = null,
+    val username: String = "",
+    val isBlocked: Boolean = false,
+    val syncStatus: Int = 1
 ) {
     val fullName: String
         get() = "$firstname $lastname".trim()

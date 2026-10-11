@@ -30,6 +30,11 @@ import com.example.myapplication.util.SweetAlertHelper
 import com.example.myapplication.util.SwipeBackHelper
 import org.json.JSONException
 import org.json.JSONObject
+import android.widget.ImageView
+import androidx.core.content.ContextCompat
+import com.example.myapplication.adapter.AmpolletaAdapter
+import com.example.myapplication.model.Ampolleta
+import com.google.android.material.switchmaterial.SwitchMaterial
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -78,12 +83,11 @@ class SensorsActivity : AppCompatActivity() {
         rvSensors = findViewById(R.id.rv_sensors_list)
         rvSensors.layoutManager = LinearLayoutManager(this)
 
-        val localBtnFlashlight = btnFlashlight
-        localBtnFlashlight?.setOnClickListener {
-            val success = FlashlightManager.toggleFlashlight(this)
-            if (success) {
-                updateFlashlightButtonState(localBtnFlashlight, FlashlightManager.isTorchOn())
-            }
+        btnFlashlight?.let { updateFlashlightButtonState(it, FlashlightManager.isTorchOn()) }
+
+        btnFlashlight?.setOnClickListener {
+            val targetState = !FlashlightManager.isTorchOn()
+            handleFlashToggle(targetState)
         }
 
         btnAddSensor.setOnClickListener {
@@ -108,15 +112,27 @@ class SensorsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        btnFlashlight?.let {
-            updateFlashlightButtonState(it, FlashlightManager.isTorchOn())
-        }
+        updateFlashUi(FlashlightManager.isTorchOn())
     }
 
     override fun onDestroy() {
         super.onDestroy()
         mHandler.removeCallbacks(refrescar)
         FlashlightManager.turnOff(this)
+    }
+
+    private fun handleFlashToggle(turnOn: Boolean) {
+        if (turnOn) {
+            val success = FlashlightManager.toggleFlashlight(this)
+            updateFlashUi(success)
+        } else {
+            FlashlightManager.turnOff(this)
+            updateFlashUi(false)
+        }
+    }
+
+    private fun updateFlashUi(isOn: Boolean) {
+        btnFlashlight?.let { updateFlashlightButtonState(it, isOn) }
     }
 
     private fun updateFlashlightButtonState(btn: ImageButton, isOn: Boolean) {
@@ -151,17 +167,43 @@ class SensorsActivity : AppCompatActivity() {
                     loadSensors()
                 } catch (e: JSONException) {
                     e.printStackTrace()
+                    tvPinkHeroTime?.text = "Error al procesar datos de www.pnk.cl"
                 }
             },
             { error: VolleyError ->
-                error.printStackTrace()
+                // Rúbrica Punto 5: Informa los errores de consulta sin cerrar inesperadamente la aplicación
+                val mensajeError = if (!com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+                    "Sin conexión: Mostrando sensores locales de SQLite"
+                } else {
+                    "Error al conectar con www.pnk.cl: ${error.networkResponse?.statusCode ?: "Servidor no disponible"}"
+                }
+                tvPinkHeroTime?.text = mensajeError
             }
         )
         datos.add(request)
     }
 
     private fun loadSensors() {
-        val sensors = dbHelper.getAllSensors()
+        if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+            com.example.myapplication.network.AwsApiService.obtenerSensores(
+                context = this,
+                onSuccess = { apiSensors ->
+                    if (apiSensors.isNotEmpty()) {
+                        displaySensors(apiSensors)
+                    } else {
+                        displaySensors(dbHelper.getAllSensors())
+                    }
+                },
+                onError = {
+                    displaySensors(dbHelper.getAllSensors())
+                }
+            )
+        } else {
+            displaySensors(dbHelper.getAllSensors())
+        }
+    }
+
+    private fun displaySensors(sensors: List<Sensor>) {
         sensorAdapter = SensorAdapter(
             sensors = sensors,
             onToggleThermometer = { sensor ->

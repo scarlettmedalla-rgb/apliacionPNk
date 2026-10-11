@@ -32,6 +32,19 @@ class UserListActivity : AppCompatActivity() {
     private lateinit var adapter: UserCardAdapter
     private lateinit var rvUsers: RecyclerView
     private lateinit var etSearch: EditText
+    private var tvSyncStatus: TextView? = null
+    private var cardSyncStatus: com.google.android.material.card.MaterialCardView? = null
+
+    private val syncListener = object : com.example.myapplication.util.SyncManager.SyncListener {
+        override fun onSyncStatusChanged(statusMessage: String, pendingCount: Int, isSyncing: Boolean) {
+            runOnUiThread {
+                updateSyncBanner()
+                if (!isSyncing) {
+                    loadUsers(etSearch.text.toString())
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +62,9 @@ class UserListActivity : AppCompatActivity() {
 
         val btnBack = findViewById<ImageButton>(R.id.btn_user_list_back)
         btnBack?.setOnClickListener { finish() }
+
+        cardSyncStatus = findViewById(R.id.card_sync_status_users)
+        tvSyncStatus = findViewById(R.id.tv_sync_users_status)
 
         rvUsers = findViewById(R.id.rv_numbered_users)
         rvUsers.layoutManager = LinearLayoutManager(this)
@@ -83,12 +99,47 @@ class UserListActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        com.example.myapplication.util.SyncManager.addListener(syncListener)
+        updateSyncBanner()
         loadUsers(etSearch.text.toString())
     }
 
+    override fun onPause() {
+        super.onPause()
+        com.example.myapplication.util.SyncManager.removeListener(syncListener)
+    }
+
+    private fun updateSyncBanner() {
+        val (statusText, _, _) = com.example.myapplication.util.SyncManager.getCurrentStatus(this)
+        tvSyncStatus?.text = statusText
+    }
+
     private fun loadUsers(query: String) {
-        val users = dbHelper.searchUsers(query)
-        adapter.updateData(users)
+        if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+            // Consulta a MySQL con MySQLi en el servidor AWS (Rúbrica Punto 4)
+            com.example.myapplication.network.AwsApiService.obtenerUsuarios(
+                context = this,
+                searchQuery = query,
+                onSuccess = { users ->
+                    // Sincronizar cache local en SQLite (Criterio 10)
+                    dbHelper.syncLocalUsersWithRemote(users)
+                    val allUsers = dbHelper.searchUsers(query)
+                    adapter.updateData(allUsers)
+                    updateSyncBanner()
+                },
+                onError = {
+                    // Si falla el servidor, respaldo en SQLite local (Rúbrica Punto 9 y 10)
+                    val localUsers = dbHelper.searchUsers(query)
+                    adapter.updateData(localUsers)
+                    updateSyncBanner()
+                }
+            )
+        } else {
+            // Funcionamiento local sin conexión (Rúbrica Punto 9 y 10)
+            val localUsers = dbHelper.searchUsers(query)
+            adapter.updateData(localUsers)
+            updateSyncBanner()
+        }
     }
 
     private class UserCardAdapter(
@@ -110,7 +161,13 @@ class UserListActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val user = users[position]
             val context = holder.itemView.context
-            holder.tvName.text = user.fullName
+            
+            // Badge visible si el registro local está pendiente de sincronizar (Criterio 12)
+            if (user.syncStatus == 0) {
+                holder.tvName.text = "${user.fullName}  ⏳ (Pendiente)"
+            } else {
+                holder.tvName.text = user.fullName
+            }
             holder.tvEmail.text = user.email
 
             val defaultRes = when {

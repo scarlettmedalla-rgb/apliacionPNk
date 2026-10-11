@@ -91,26 +91,76 @@ class AddUserActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            val fnClean = fn.lowercase(java.util.Locale.getDefault()).replace("\\s+".toRegex(), "")
+            val lnClean = ln.lowercase(java.util.Locale.getDefault()).replace("\\s+".toRegex(), "")
+            val generatedUsername = "$fnClean.$lnClean"
+
+            if (dbHelper.isUsernameExists(generatedUsername)) {
+                SweetAlertHelper.showError(this, "Usuario Duplicado", "Ya existe un usuario registrado con el identificador $generatedUsername.")
+                return@setOnClickListener
+            }
+
             val newUser = User(
                 rut = rut,
                 firstname = fn,
                 lastname = ln,
                 email = email,
                 phone = phone,
-                password = "Clave123!"
+                password = "Clave123!",
+                username = generatedUsername
             )
 
-            val result = dbHelper.insertUser(newUser)
-            if (result != -1L) {
+            btnSave.isEnabled = false
+
+            if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+                // Registrar en MySQL en AWS y replicar en SQLite local
+                com.example.myapplication.network.AwsApiService.guardarUsuario(
+                    context = this,
+                    user = newUser,
+                    onSuccess = { msg ->
+                        dbHelper.insertUser(newUser, syncStatus = 1)
+                        btnSave.isEnabled = true
+                        SweetAlertHelper.showSuccess(
+                            context = this,
+                            title = "¡Usuario Registrado!",
+                            message = "Usuario $fn $ln registrado y sincronizado en AWS."
+                        ) {
+                            finish()
+                        }
+                    },
+                    onError = { errorMsg ->
+                        if (errorMsg.contains("duplicado", ignoreCase = true) || errorMsg.contains("existe", ignoreCase = true)) {
+                            btnSave.isEnabled = true
+                            SweetAlertHelper.showError(this, "Error de Duplicidad", errorMsg)
+                        } else {
+                            // Si falla la red de AWS, guardar localmente y encolar cambio pendiente (Criterio 11)
+                            val localId = dbHelper.insertUser(newUser, syncStatus = 0)
+                            val userWithId = newUser.copy(id = localId.toInt(), syncStatus = 0)
+                            dbHelper.addSyncAction("INSERT", localId.toInt(), com.example.myapplication.util.SyncManager.userToJson(userWithId))
+                            btnSave.isEnabled = true
+                            SweetAlertHelper.showSuccess(
+                                context = this,
+                                title = "Guardado Localmente",
+                                message = "Sin conexión a AWS. Guardado en SQLite y encolado para sincronización automática."
+                            ) {
+                                finish()
+                            }
+                        }
+                    }
+                )
+            } else {
+                // Modo Offline: Operación CRUD local en SQLite y encolado pendiente (Criterio 10 y 11)
+                val localId = dbHelper.insertUser(newUser, syncStatus = 0)
+                val userWithId = newUser.copy(id = localId.toInt(), syncStatus = 0)
+                dbHelper.addSyncAction("INSERT", localId.toInt(), com.example.myapplication.util.SyncManager.userToJson(userWithId))
+                btnSave.isEnabled = true
                 SweetAlertHelper.showSuccess(
                     context = this,
-                    title = "¡Usuario Registrado!",
-                    message = "El nuevo usuario $fn $ln ha sido agregado con éxito a la base de datos."
+                    title = "Modo Sin Conexión",
+                    message = "Usuario registrado en SQLite. Cambio encolado para sincronizar con AWS al recuperar la red."
                 ) {
                     finish()
                 }
-            } else {
-                SweetAlertHelper.showError(this, "Error de Inserción", "No se pudo guardar el usuario en la base de datos.")
             }
         }
     }

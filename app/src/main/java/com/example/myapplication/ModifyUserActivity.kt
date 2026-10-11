@@ -85,22 +85,22 @@ class ModifyUserActivity : AppCompatActivity() {
         val btnModificar = findViewById<MaterialButton>(R.id.btn_mod_modificar)
         val btnEliminar = findViewById<MaterialButton>(R.id.btn_mod_eliminar)
 
-        // Modo solo lectura (visualizar perfil)
-        btnChangePhoto?.visibility = android.view.View.GONE
-        btnModificar?.visibility = android.view.View.GONE
-        btnEliminar?.visibility = android.view.View.GONE
+        // Modo edición y gestión completa (Rúbrica Punto 4)
+        btnChangePhoto?.visibility = android.view.View.VISIBLE
+        btnModificar?.visibility = android.view.View.VISIBLE
+        btnEliminar?.visibility = android.view.View.VISIBLE
 
-        etFn.isEnabled = false
-        etFn.isFocusable = false
-        etFn.isClickable = false
+        etFn.isEnabled = true
+        etFn.isFocusableInTouchMode = true
+        etFn.isClickable = true
 
-        etLn.isEnabled = false
-        etLn.isFocusable = false
-        etLn.isClickable = false
+        etLn.isEnabled = true
+        etLn.isFocusableInTouchMode = true
+        etLn.isClickable = true
 
-        etEm.isEnabled = false
-        etEm.isFocusable = false
-        etEm.isClickable = false
+        etEm.isEnabled = true
+        etEm.isFocusableInTouchMode = true
+        etEm.isClickable = true
 
         // Load existing user from database or Intent extras
         val userFromDb = if (userId != -1) dbHelper.getUserById(userId) else null
@@ -192,14 +192,50 @@ class ModifyUserActivity : AppCompatActivity() {
                 profilePhoto = selectedPhotoPath
             )
 
-            dbHelper.updateUser(updatedUser)
+            btnModificar.isEnabled = false
 
-            SweetAlertHelper.showSuccess(
-                context = this,
-                title = "¡Perfil Actualizado!",
-                message = "Los datos y fotografía de perfil han sido guardados con éxito."
-            ) {
-                finish()
+            if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+                // Actualizar en MySQL en AWS
+                com.example.myapplication.network.AwsApiService.modificarUsuario(
+                    context = this,
+                    user = updatedUser,
+                    onSuccess = { msg ->
+                        dbHelper.updateUser(updatedUser, syncStatus = 1)
+                        btnModificar.isEnabled = true
+                        SweetAlertHelper.showSuccess(
+                            context = this,
+                            title = "¡Perfil Actualizado!",
+                            message = "Datos actualizados y sincronizados en AWS."
+                        ) {
+                            finish()
+                        }
+                    },
+                    onError = {
+                        // Si falla la red remota, guardar en SQLite como pendiente y encolar cambio (Criterio 11)
+                        dbHelper.updateUser(updatedUser, syncStatus = 0)
+                        dbHelper.addSyncAction("UPDATE", userId, com.example.myapplication.util.SyncManager.userToJson(updatedUser.copy(syncStatus = 0)))
+                        btnModificar.isEnabled = true
+                        SweetAlertHelper.showSuccess(
+                            context = this,
+                            title = "Actualizado Localmente",
+                            message = "Sin conexión a AWS. Guardado en SQLite y encolado para sincronización automática."
+                        ) {
+                            finish()
+                        }
+                    }
+                )
+            } else {
+                // Modo Offline: Actualizar en SQLite local como pendiente y encolar en sync_queue (Criterio 10, 11 y 12)
+                dbHelper.updateUser(updatedUser, syncStatus = 0)
+                dbHelper.addSyncAction("UPDATE", userId, com.example.myapplication.util.SyncManager.userToJson(updatedUser.copy(syncStatus = 0)))
+                btnModificar.isEnabled = true
+                SweetAlertHelper.showSuccess(
+                    context = this,
+                    title = "Modo Sin Conexión",
+                    message = "Cambios guardados en SQLite. Modificación encolada para sincronizar al recuperar Internet."
+                ) {
+                    finish()
+                }
             }
         }
 
@@ -211,13 +247,49 @@ class ModifyUserActivity : AppCompatActivity() {
                 confirmText = "Sí, Eliminar",
                 cancelText = "Cancelar",
                 onConfirm = {
+                    btnEliminar.isEnabled = false
+                    // Eliminación local inmediata en SQLite (Criterio 10)
                     dbHelper.deleteUser(userId)
-                    SweetAlertHelper.showSuccess(
-                        context = this,
-                        title = "¡Eliminado!",
-                        message = "El usuario ha sido eliminado correctamente del sistema."
-                    ) {
-                        finish()
+
+                    if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+                        // Eliminar en MySQL en AWS
+                        com.example.myapplication.network.AwsApiService.eliminarUsuario(
+                            context = this,
+                            userId = userId,
+                            onSuccess = { msg ->
+                                btnEliminar.isEnabled = true
+                                SweetAlertHelper.showSuccess(
+                                    context = this,
+                                    title = "¡Eliminado!",
+                                    message = "Usuario eliminado tanto de AWS como localmente."
+                                ) {
+                                    finish()
+                                }
+                            },
+                            onError = {
+                                // Encolar eliminación pendiente (Criterio 11)
+                                dbHelper.addSyncAction("DELETE", userId, "{\"id\": $userId}")
+                                btnEliminar.isEnabled = true
+                                SweetAlertHelper.showSuccess(
+                                    context = this,
+                                    title = "Eliminado Localmente",
+                                    message = "Sin conexión con AWS. Eliminado en SQLite y encolado para sincronizar con la nube."
+                                ) {
+                                    finish()
+                                }
+                            }
+                        )
+                    } else {
+                        // Modo Offline: Encolar DELETE en sync_queue (Criterio 11 y 12)
+                        dbHelper.addSyncAction("DELETE", userId, "{\"id\": $userId}")
+                        btnEliminar.isEnabled = true
+                        SweetAlertHelper.showSuccess(
+                            context = this,
+                            title = "Modo Sin Conexión",
+                            message = "Usuario eliminado en SQLite. Eliminación encolada para sincronizar al recuperar Internet."
+                        ) {
+                            finish()
+                        }
                     }
                 }
             )

@@ -6,12 +6,21 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.myapplication.db.DatabaseHelper
+import com.example.myapplication.network.AwsApiService
+import com.example.myapplication.util.NetworkHelper
 import com.example.myapplication.util.SweetAlertHelper
 import com.example.myapplication.util.ValidationUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 
+/**
+ * Rúbrica Punto 2: Reactivación de cuenta y guardado de nueva contraseña.
+ */
 class ResetPasswordActivity : AppCompatActivity() {
+
+    private lateinit var dbHelper: DatabaseHelper
+    private var userEmail: String = ""
 
     override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
         if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
@@ -24,6 +33,9 @@ class ResetPasswordActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_reset_password)
+
+        dbHelper = DatabaseHelper(this)
+        userEmail = intent.getStringExtra("USER_EMAIL") ?: ""
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.reset_scroll)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -72,15 +84,42 @@ class ResetPasswordActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            SweetAlertHelper.showSuccess(
-                context = this,
-                title = "¡Contraseña Creada!",
-                message = "Su nueva contraseña ha sido establecida con éxito."
-            ) {
-                val intent = Intent(this, LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(intent)
-                finish()
+            btnCrear.isEnabled = false
+
+            // 1. Reactivar cuenta localmente en SQLite y actualizar clave
+            if (userEmail.isNotEmpty()) {
+                dbHelper.unblockUserAndResetPassword(userEmail, p1)
+            }
+
+            val finishAndGoLogin = {
+                SweetAlertHelper.showSuccess(
+                    context = this,
+                    title = "¡Cuenta Reactivada!",
+                    message = "Su nueva contraseña ha sido establecida y su cuenta ha sido reactivada con éxito."
+                ) {
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                    finish()
+                }
+            }
+
+            // 2. Reactivar cuenta en MySQL en AWS si hay conexión
+            if (userEmail.isNotEmpty() && NetworkHelper.isOnline(this)) {
+                AwsApiService.restablecerPassword(
+                    context = this,
+                    email = userEmail,
+                    newPass = p1,
+                    onSuccess = {
+                        finishAndGoLogin()
+                    },
+                    onError = {
+                        // Aunque falle la red de AWS, ya se reactivó localmente
+                        finishAndGoLogin()
+                    }
+                )
+            } else {
+                finishAndGoLogin()
             }
         }
     }

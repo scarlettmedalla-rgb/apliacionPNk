@@ -179,17 +179,78 @@ class LoginActivity : AppCompatActivity() {
 
             btnLogin.isEnabled = false
 
-            SweetAlertHelper.showProgressToSuccess(
-                context = this,
-                loadingTitle = "Validando credenciales...",
-                successTitle = "¡Bienvenido!",
-                successMessage = "Inicio de sesión correcto.",
-                durationMs = 1200
-            ) {
+            val proceedToMain = {
                 btnLogin.isEnabled = true
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 startActivity(intent)
                 finish()
+            }
+
+            if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+                // Validación contra MySQL mediante la API en AWS (Rúbrica Punto 1)
+                com.example.myapplication.network.AwsApiService.iniciarSesion(
+                    context = this,
+                    usernameOrEmail = username,
+                    pass = password,
+                    onSuccess = { user ->
+                        SweetAlertHelper.showSuccess(
+                            context = this,
+                            title = "¡Bienvenido!",
+                            message = "Sesión iniciada con éxito (${user.firstname})."
+                        ) {
+                            proceedToMain()
+                        }
+                    },
+                    onBlocked = { msg ->
+                        btnLogin.isEnabled = true
+                        SweetAlertHelper.showError(
+                            this,
+                            "Cuenta Bloqueada",
+                            msg
+                        )
+                    },
+                    onError = { errorMsg ->
+                        // Fallback a SQLite local si el servidor no responde o está en modo local
+                        val (ok, blocked, localUser) = dbHelper.validateLocalLogin(username, password)
+                        if (ok) {
+                            if (blocked) {
+                                btnLogin.isEnabled = true
+                                SweetAlertHelper.showError(this, "Cuenta Bloqueada", "Esta cuenta está bloqueada localmente.")
+                            } else {
+                                SweetAlertHelper.showSuccess(
+                                    context = this,
+                                    title = "Modo Offline",
+                                    message = "Inicio de sesión validado con la base de datos local."
+                                ) {
+                                    proceedToMain()
+                                }
+                            }
+                        } else {
+                            btnLogin.isEnabled = true
+                            SweetAlertHelper.showError(this, "Error de Inicio de Sesión", errorMsg)
+                        }
+                    }
+                )
+            } else {
+                // Modo Offline: Validación directa en SQLite (Rúbrica Punto 9 y 10)
+                val (ok, blocked, localUser) = dbHelper.validateLocalLogin(username, password)
+                if (ok) {
+                    if (blocked) {
+                        btnLogin.isEnabled = true
+                        SweetAlertHelper.showError(this, "Cuenta Bloqueada", "Esta cuenta está bloqueada localmente por seguridad.")
+                    } else {
+                        SweetAlertHelper.showSuccess(
+                            context = this,
+                            title = "Modo Sin Conexión",
+                            message = "Acceso concedido mediante almacenamiento local SQLite."
+                        ) {
+                            proceedToMain()
+                        }
+                    }
+                } else {
+                    btnLogin.isEnabled = true
+                    SweetAlertHelper.showError(this, "Credenciales Incorrectas", "Usuario/correo o contraseña inválidos en la base local.")
+                }
             }
         }
 

@@ -30,11 +30,12 @@ import com.example.myapplication.model.Ampolleta
 import com.example.myapplication.util.DeveloperHelper
 import com.example.myapplication.util.EdgeToEdgeHelper
 import com.example.myapplication.util.FlashlightManager
+import com.example.myapplication.util.NetworkHelper
+import com.example.myapplication.util.SyncManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.switchmaterial.SwitchMaterial
-import org.json.JSONException
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -60,13 +61,33 @@ class MainActivity : AppCompatActivity() {
     private var tvPinkHeroTempMain: TextView? = null
     private var tvPinkHeroHumMain: TextView? = null
 
+    // Sincronización dentro del recuadro rosado
+    private var tvSyncStatusMain: TextView? = null
+    private var ivSyncMainIcon: ImageView? = null
+
     private lateinit var datos: RequestQueue
     private val mHandler = Handler(Looper.getMainLooper())
+    private var networkCallback: android.net.ConnectivityManager.NetworkCallback? = null
 
     private val refrescar = object : Runnable {
         override fun run() {
             obtenerDatosApi()
             mHandler.postDelayed(this, 5000)
+        }
+    }
+
+    private val timeTicker = object : Runnable {
+        override fun run() {
+            updateLiveTime()
+            mHandler.postDelayed(this, 1000)
+        }
+    }
+
+    private val syncListener = object : SyncManager.SyncListener {
+        override fun onSyncStatusChanged(statusMessage: String, pendingCount: Int, isSyncing: Boolean) {
+            runOnUiThread {
+                updateSyncBanner()
+            }
         }
     }
 
@@ -102,12 +123,16 @@ class MainActivity : AppCompatActivity() {
         tvPinkHeroTempMain = findViewById(R.id.tv_pink_hero_temp_main)
         tvPinkHeroHumMain = findViewById(R.id.tv_pink_hero_hum_main)
 
+        // Elementos de sincronización dentro de la tarjeta rosada
+        tvSyncStatusMain = findViewById(R.id.tv_sync_status_main)
+        ivSyncMainIcon = findViewById(R.id.iv_sync_main_icon)
+
         switchFlashlight = findViewById(R.id.switch_flashlight)
         tvFlashStatus = findViewById(R.id.tv_flash_status)
 
         val btnHeroSensors = findViewById<MaterialButton>(R.id.btn_hero_sensors)
 
-        // 1. Sensores por Localidad Carousel
+        // 1. Sensores por Localidad (Carrusel)
         val rvCarousel = findViewById<RecyclerView>(R.id.rv_sensors_carousel)
         rvCarousel.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
@@ -116,7 +141,10 @@ class MainActivity : AppCompatActivity() {
             CarouselSensorItem("La Serena Centro", "21.2 °C", "Humedad 62% • Operativo"),
             CarouselSensorItem("Ovalle Central", "23.5 °C", "Humedad 58% • Operativo"),
             CarouselSensorItem("Coquimbo Costa", "17.8 °C", "Humedad 75% • Operativo"),
-            CarouselSensorItem("Vicuña / Elqui", "22.0 °C", "Humedad 52% • Operativo")
+            CarouselSensorItem("Vicuña / Elqui", "22.0 °C", "Humedad 52% • Operativo"),
+            CarouselSensorItem("Andacollo Cordillera", "20.5 °C", "Humedad 48% • Operativo"),
+            CarouselSensorItem("Monte Patria Valles", "24.1 °C", "Humedad 45% • Operativo"),
+            CarouselSensorItem("Salamanca Choapa", "22.8 °C", "Humedad 50% • Operativo")
         )
 
         carouselAdapter = CarouselSensorAdapter(initialCarouselData) {
@@ -125,7 +153,7 @@ class MainActivity : AppCompatActivity() {
         }
         rvCarousel.adapter = carouselAdapter
 
-        // 2. Section "Mis Ampolletas"
+        // 2. Sección "Mis Ampolletas" en Pantalla Principal
         rvAmpolletas = findViewById(R.id.rv_ampolletas)
         rvAmpolletas.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
@@ -135,20 +163,19 @@ class MainActivity : AppCompatActivity() {
             Ampolleta(3, "Luz Inteligente", "Encendida • 80%", imageResId = R.drawable.ic_lightbulb_on)
         )
         ampolletaAdapter = AmpolletaAdapter(sampleAmpolletas) { ampolleta ->
-            // Requerimiento 11: Alternar ampolleta visualmente
             val isOn = ampolleta.imageResId == R.drawable.ic_lightbulb_on
             val newState = if (isOn) "Apagada • Standby" else "Encendida • 100%"
             val newIcon = if (isOn) R.drawable.ic_lightbulb_off else R.drawable.ic_lightbulb_on
             val updatedAmpolleta = ampolleta.copy(status = newState, imageResId = newIcon)
-            
-            val updatedList = ampolletaAdapter.getItems().map { 
-                if (it.id == ampolleta.id) updatedAmpolleta else it 
+
+            val updatedList = ampolletaAdapter.getItems().map {
+                if (it.id == ampolleta.id) updatedAmpolleta else it
             }
             ampolletaAdapter.updateData(updatedList)
         }
         rvAmpolletas.adapter = ampolletaAdapter
 
-        // 3. Section "Desarrolladores Pnk" (Vertical List matching User Cards)
+        // 3. Sección "Desarrolladores Pnk"
         rvTeamDevs = findViewById(R.id.rv_team_devs)
         rvTeamDevs.layoutManager = LinearLayoutManager(this)
 
@@ -159,7 +186,7 @@ class MainActivity : AppCompatActivity() {
         }
         rvTeamDevs.adapter = teamDevAdapter
 
-        // 4. Flashlight Switch behavior
+        // 4. Control de Linterna
         switchFlashlight.isChecked = FlashlightManager.isTorchOn()
         updateFlashStatusText(FlashlightManager.isTorchOn())
 
@@ -171,31 +198,31 @@ class MainActivity : AppCompatActivity() {
         val navItemUsers = findViewById<TextView>(R.id.nav_item_users)
         val navItemSensors = findViewById<TextView>(R.id.nav_item_sensors)
         val navItemSettings = findViewById<TextView>(R.id.nav_item_settings)
-
         val fabAddNew = findViewById<FloatingActionButton>(R.id.fab_add_new)
 
-        // Set Dynamic Time Greeting and Weather Icon
+        // Saludo dinámico y clima
         updateGreetingAndWeather(tvGreetingTime, ivWeatherIcon)
 
-        // Start silent API updates for home screen cards
+        // Inicio de tickers para hora y llamadas API periódicas
+        mHandler.post(timeTicker)
         mHandler.post(refrescar)
 
-        // Hero Card Button
+        // Botón "Ver Sensores" en la tarjeta rosada
         btnHeroSensors.setOnClickListener {
             val intent = Intent(this, SensorsActivity::class.java)
             startActivity(intent)
         }
 
-        // FAB + Click: Dedicated Dialog Sheet
+        // FAB (+)
         fabAddNew.setOnClickListener {
             showAddOptionDialog()
         }
 
-        // Bottom Navigation Bar Item Clicks & Styling
+        // Barra inferior
         highlightHomeTab(navItemHome, navItemUsers, navItemSensors, navItemSettings)
 
         navItemHome.setOnClickListener {
-            // Already on home screen
+            // Ya estamos en Home
         }
 
         navItemUsers.setOnClickListener {
@@ -211,6 +238,55 @@ class MainActivity : AppCompatActivity() {
         navItemSettings.setOnClickListener {
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
+        }
+
+        // Registrar listener de sincronización
+        SyncManager.addListener(syncListener)
+
+        // Escuchar cambios de conectividad de red para disparo automático
+        networkCallback = NetworkHelper.registerNetworkCallback(
+            context = this,
+            onNetworkAvailable = {
+                runOnUiThread {
+                    updateSyncBanner()
+                }
+            },
+            onNetworkLost = {
+                runOnUiThread {
+                    updateSyncBanner()
+                }
+            }
+        )
+
+        updateSyncBanner()
+    }
+
+    private fun updateLiveTime() {
+        val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm:ss", Locale.getDefault())
+        tvPinkHeroTimeMain?.text = "Hora Actual: ${sdf.format(Date())}"
+    }
+
+    private fun updateSyncBanner() {
+        val isOnline = NetworkHelper.isOnline(this)
+        val pendingCount = dbHelper.getPendingSyncCount()
+
+        when {
+            !isOnline -> {
+                ivSyncMainIcon?.setImageResource(R.drawable.ic_sync)
+                if (pendingCount > 0) {
+                    tvSyncStatusMain?.text = "🔴 Modo sin conexión • $pendingCount cambio(s) pendiente(s)"
+                } else {
+                    tvSyncStatusMain?.text = "🔴 Modo sin conexión • Todo al día"
+                }
+            }
+            pendingCount > 0 -> {
+                ivSyncMainIcon?.setImageResource(R.drawable.ic_sync)
+                tvSyncStatusMain?.text = "🟡 Sincronizando con AWS... ($pendingCount pendientes)"
+            }
+            else -> {
+                ivSyncMainIcon?.setImageResource(R.drawable.ic_sync)
+                tvSyncStatusMain?.text = "🟢 En Línea • Sincronizado con AWS"
+            }
         }
     }
 
@@ -270,6 +346,7 @@ class MainActivity : AppCompatActivity() {
         if (::teamDevAdapter.isInitialized) {
             teamDevAdapter.updateData(DeveloperHelper.getDevelopers(this))
         }
+        updateSyncBanner()
     }
 
     private fun obtenerDatosApi() {
@@ -281,24 +358,20 @@ class MainActivity : AppCompatActivity() {
                     val tempStr = response.optString("temperatura", "21.5")
                     val humStr = response.optString("humedad", "58%")
 
-                    // Connect ALL sensors to the live reading in DB
                     dbHelper.updateAllActiveSensorsFromApi(tempStr, humStr)
 
-                    val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm:ss", Locale.getDefault())
-                    val nowStr = sdf.format(Date())
-
-                    // Live Time & API Metrics in Hero Pink Card
-                    tvPinkHeroTimeMain?.text = "Hora Actual: $nowStr"
                     tvPinkHeroTempMain?.text = "$tempStr °C"
                     tvPinkHeroHumMain?.text = "$humStr %"
 
-                    // Update Carousel items (Sensores por Localidad)
                     val liveCarouselItems = listOf(
                         CarouselSensorItem("Ovalle Central", "$tempStr °C", "Humedad $humStr% • Operativo"),
                         CarouselSensorItem("Coquimbo Costa", "$tempStr °C", "Humedad $humStr% • Operativo"),
                         CarouselSensorItem("La Serena Centro", "$tempStr °C", "Humedad $humStr% • Operativo"),
                         CarouselSensorItem("Tierras Blancas", "$tempStr °C", "Humedad $humStr% • Operativo"),
-                        CarouselSensorItem("Vicuña / Elqui", "$tempStr °C", "Humedad $humStr% • Operativo")
+                        CarouselSensorItem("Vicuña / Elqui", "$tempStr °C", "Humedad $humStr% • Operativo"),
+                        CarouselSensorItem("Andacollo Cordillera", "$tempStr °C", "Humedad $humStr% • Operativo"),
+                        CarouselSensorItem("Monte Patria Valles", "$tempStr °C", "Humedad $humStr% • Operativo"),
+                        CarouselSensorItem("Salamanca Choapa", "$tempStr °C", "Humedad $humStr% • Operativo")
                     )
                     carouselAdapter.updateData(liveCarouselItems)
                 } catch (e: Exception) {
@@ -315,6 +388,10 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         mHandler.removeCallbacks(refrescar)
+        mHandler.removeCallbacks(timeTicker)
+        SyncManager.removeListener(syncListener)
+        networkCallback?.let { NetworkHelper.unregisterNetworkCallback(this, it) }
+        FlashlightManager.turnOff(this)
     }
 
     private fun showAddOptionDialog() {

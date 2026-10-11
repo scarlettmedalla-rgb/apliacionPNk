@@ -66,5 +66,20 @@
             app:backgroundTint="@color/navy_dark"
             app:cornerRadius="14dp" />
 
+        <!-- Button 3: VOLVER AL MENÚ PRINCIPAL -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_menu_volver_principal"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="20dp"
+            android:text="Volver al Menú Principal"
+            android:textColor="@color/text_dark"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/white"
+            app:strokeColor="@color/card_border"
+            app:strokeWidth="1.2dp"
+            app:cornerRadius="14dp" />
+
     </LinearLayout>
 </ScrollView>

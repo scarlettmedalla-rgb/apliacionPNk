@@ -29,15 +29,20 @@ class UserMenuActivity : AppCompatActivity() {
 
         val btnIngresar = findViewById<MaterialButton>(R.id.btn_menu_ingresar_usuarios)
         val btnListar = findViewById<MaterialButton>(R.id.btn_menu_listar_usuarios)
+        val btnVolver = findViewById<MaterialButton>(R.id.btn_menu_volver_principal)
 
         btnIngresar.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
+            val intent = Intent(this, AddUserActivity::class.java)
             startActivity(intent)
         }
 
         btnListar.setOnClickListener {
             val intent = Intent(this, UserListActivity::class.java)
             startActivity(intent)
+        }
+
+        btnVolver?.setOnClickListener {
+            finish()
         }
     }
 }
