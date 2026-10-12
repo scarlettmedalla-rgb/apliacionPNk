@@ -51,6 +51,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var switchFlashlight: SwitchMaterial
     private lateinit var tvFlashStatus: TextView
+    private lateinit var ivIconFlashlight: ImageView
+    private lateinit var cardFlashlightIconWrap: MaterialCardView
     private lateinit var rvAmpolletas: RecyclerView
     private lateinit var ampolletaAdapter: AmpolletaAdapter
 
@@ -129,6 +131,8 @@ class MainActivity : AppCompatActivity() {
 
         switchFlashlight = findViewById(R.id.switch_flashlight)
         tvFlashStatus = findViewById(R.id.tv_flash_status)
+        ivIconFlashlight = findViewById(R.id.iv_icon_flashlight)
+        cardFlashlightIconWrap = findViewById(R.id.card_flashlight_icon_wrap)
 
         val btnHeroSensors = findViewById<MaterialButton>(R.id.btn_hero_sensors)
 
@@ -218,7 +222,7 @@ class MainActivity : AppCompatActivity() {
             showAddOptionDialog()
         }
 
-        // Barra inferior
+        // Barra inferior: Item al lado de la casa (Usuarios) abre el Menú de Gestión de Usuario
         highlightHomeTab(navItemHome, navItemUsers, navItemSensors, navItemSettings)
 
         navItemHome.setOnClickListener {
@@ -226,7 +230,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         navItemUsers.setOnClickListener {
-            val intent = Intent(this, UserListActivity::class.java)
+            // "en el apartado al lado de la casa que dice usuario ahi ponelo": Abre el Menú de Gestión de Usuario
+            val intent = Intent(this, UserMenuActivity::class.java)
             startActivity(intent)
         }
 
@@ -313,9 +318,13 @@ class MainActivity : AppCompatActivity() {
         if (isOn) {
             tvFlashStatus.text = "Encendida • Activa"
             tvFlashStatus.setTextColor(ContextCompat.getColor(this, R.color.pink_primary))
+            ivIconFlashlight.setColorFilter(ContextCompat.getColor(this, R.color.white))
+            cardFlashlightIconWrap.setCardBackgroundColor(ContextCompat.getColor(this, R.color.pink_primary))
         } else {
             tvFlashStatus.text = "Apagada"
             tvFlashStatus.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+            ivIconFlashlight.setColorFilter(ContextCompat.getColor(this, R.color.pink_primary))
+            cardFlashlightIconWrap.setCardBackgroundColor(ContextCompat.getColor(this, R.color.pink_pastel_light))
         }
     }
 

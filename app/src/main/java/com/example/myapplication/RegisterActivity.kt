@@ -247,17 +247,33 @@ class RegisterActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            val fnClean = fn.lowercase(java.util.Locale.getDefault()).replace("\\s+".toRegex(), "")
+            val lnClean = ln.lowercase(java.util.Locale.getDefault()).replace("\\s+".toRegex(), "")
+            val generatedUsername = "$fnClean.$lnClean"
+
+            if (dbHelper.isUsernameExists(generatedUsername)) {
+                SweetAlertHelper.showError(
+                    this,
+                    "Usuario Ya Registrado",
+                    "El nombre de usuario ($generatedUsername) ya se encuentra registrado. Modifique sus nombres o apellidos."
+                )
+                return@setOnClickListener
+            }
+
             val newUser = User(
-                rut = "",
+                rut = "11.111.111-1",
                 firstname = fn,
                 lastname = ln,
                 email = email,
                 phone = "",
-                password = p1
+                password = p1,
+                username = generatedUsername
             )
 
-            val result = dbHelper.insertUser(newUser)
-            if (result != -1L) {
+            btnRegistrar.isEnabled = false
+
+            val proceedToLogin = {
+                btnRegistrar.isEnabled = true
                 SweetAlertHelper.showSuccess(
                     context = this,
                     title = "¡Registro Exitoso!",
@@ -269,12 +285,36 @@ class RegisterActivity : AppCompatActivity() {
                     startActivity(intent)
                     finish()
                 }
-            } else {
-                SweetAlertHelper.showError(
-                    this,
-                    "Error de Registro",
-                    "No se pudo completar el registro. Intente nuevamente."
+            }
+
+            if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+                // Rúbrica Punto 5: Registra usuarios en MySQL mediante la API
+                com.example.myapplication.network.AwsApiService.guardarUsuario(
+                    context = this,
+                    user = newUser,
+                    onSuccess = {
+                        dbHelper.insertUser(newUser, syncStatus = 1)
+                        proceedToLogin()
+                    },
+                    onError = { errorMsg ->
+                        if (errorMsg.contains("duplicado", ignoreCase = true) || errorMsg.contains("existe", ignoreCase = true) || errorMsg.contains("ya se encuentra", ignoreCase = true)) {
+                            btnRegistrar.isEnabled = true
+                            SweetAlertHelper.showError(this, "Datos Duplicados", errorMsg)
+                        } else {
+                            // Si falla por red u otro motivo, guardar localmente y encolar sincronización
+                            val localId = dbHelper.insertUser(newUser, syncStatus = 0)
+                            val userWithId = newUser.copy(id = localId.toInt(), syncStatus = 0)
+                            dbHelper.addSyncAction("INSERT", localId.toInt(), com.example.myapplication.util.SyncManager.userToJson(userWithId))
+                            proceedToLogin()
+                        }
+                    }
                 )
+            } else {
+                // Modo Offline: Registrar en SQLite local y encolar para sincronizar automáticamente
+                val localId = dbHelper.insertUser(newUser, syncStatus = 0)
+                val userWithId = newUser.copy(id = localId.toInt(), syncStatus = 0)
+                dbHelper.addSyncAction("INSERT", localId.toInt(), com.example.myapplication.util.SyncManager.userToJson(userWithId))
+                proceedToLogin()
             }
         }
     }
