@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Configuración de MySQL con MySQLi (Requisito de la Rúbrica)
 $host = "localhost"; // Cambiar por tu endpoint de RDS o localhost en EC2
 $db_name = "pnk_iot_db";
-$username = "root";  // Tu usuario de MySQL en AWS
-$password = "";      // Tu contraseña de MySQL en AWS
+$username = "admin";  // Tu usuario de MySQL en AWS
+$password = "admin";  // Tu contraseña de MySQL en AWS
 
 // Conexión usando MySQLi
 $conn = new mysqli($host, $username, $password, $db_name);
