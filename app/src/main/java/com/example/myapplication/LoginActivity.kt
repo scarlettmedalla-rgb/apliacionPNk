@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
@@ -19,8 +20,11 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cn.pedant.SweetAlert.SweetAlertDialog
 import com.example.myapplication.db.DatabaseHelper
+import com.example.myapplication.network.AwsApiService
 import com.example.myapplication.util.EdgeToEdgeHelper
+import com.example.myapplication.util.NetworkHelper
 import com.example.myapplication.util.SweetAlertHelper
 import com.example.myapplication.util.ValidationUtils
 import com.google.android.material.button.MaterialButton
@@ -29,9 +33,11 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private var isPasswordVisible = false
+    private var progressDialog: SweetAlertDialog? = null
 
     private lateinit var layoutInitialView: ConstraintLayout
     private lateinit var layoutLoginForm: ConstraintLayout
+    private lateinit var btnLogin: MaterialButton
 
     override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
         if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
@@ -71,7 +77,7 @@ class LoginActivity : AppCompatActivity() {
         val etUsername = findViewById<EditText>(R.id.et_username)
         val etPassword = findViewById<EditText>(R.id.et_password)
         val ivPasswordToggle = findViewById<ImageView>(R.id.iv_password_toggle)
-        val btnLogin = findViewById<MaterialButton>(R.id.btn_login)
+        btnLogin = findViewById(R.id.btn_login)
         val tvForgot = findViewById<TextView>(R.id.tv_forgot_password)
         val tvFormRegisterPrompt = findViewById<TextView>(R.id.tv_form_register_prompt)
         val tvBackToOptions = findViewById<TextView>(R.id.tv_back_to_options)
@@ -186,71 +192,76 @@ class LoginActivity : AppCompatActivity() {
                 finish()
             }
 
-            if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+            if (NetworkHelper.isOnline(this)) {
+                progressDialog = SweetAlertHelper.showProgress(this, "Iniciando sesión...")
                 // Validación contra MySQL mediante la API en AWS (Rúbrica Punto 1)
-                com.example.myapplication.network.AwsApiService.iniciarSesion(
+                AwsApiService.iniciarSesion(
                     context = this,
                     usernameOrEmail = username,
                     pass = password,
                     onSuccess = { user ->
-                        SweetAlertHelper.showSuccess(
-                            context = this,
-                            title = "¡Bienvenido!",
-                            message = "Sesión iniciada con éxito (${user.firstname})."
-                        ) {
-                            proceedToMain()
+                        dismissProgress()
+                        if (!isFinishing && !isDestroyed) {
+                            dbHelper.upsertUserFromLogin(user, password)
+                            saveUserSession(user.firstname.ifBlank { username }, username, isOffline = false)
+                            btnLogin.isEnabled = true
+                            SweetAlertHelper.showSuccess(
+                                context = this,
+                                title = "¡Bienvenido!",
+                                message = "Sesión iniciada con éxito (${user.firstname.ifBlank { username }})."
+                            ) {
+                                proceedToMain()
+                            }
                         }
                     },
                     onBlocked = { msg ->
-                        btnLogin.isEnabled = true
-                        SweetAlertHelper.showError(
-                            this,
-                            "Cuenta Bloqueada",
-                            msg
-                        )
+                        dismissProgress()
+                        if (!isFinishing && !isDestroyed) {
+                            btnLogin.isEnabled = true
+                            SweetAlertHelper.showError(
+                                this,
+                                "Cuenta Bloqueada",
+                                msg
+                            )
+                        }
                     },
                     onError = { errorMsg ->
-                        // Fallback a SQLite local si el servidor no responde o está en modo local
-                        val (ok, blocked, localUser) = dbHelper.validateLocalLogin(username, password)
-                        if (ok) {
-                            if (blocked) {
-                                btnLogin.isEnabled = true
-                                SweetAlertHelper.showError(this, "Cuenta Bloqueada", "Esta cuenta está bloqueada localmente.")
-                            } else {
-                                SweetAlertHelper.showSuccess(
-                                    context = this,
-                                    title = "Modo Offline",
-                                    message = "Inicio de sesión validado con la base de datos local."
-                                ) {
-                                    proceedToMain()
+                        dismissProgress()
+                        if (!isFinishing && !isDestroyed) {
+                            // Si el usuario se registró localmente sin sincronizar aún, permitir acceso local
+                            val localUser = dbHelper.findUserByIdentifier(username)
+                            if (localUser != null && localUser.syncStatus == 0 && localUser.password == password) {
+                                if (localUser.isBlocked) {
+                                    btnLogin.isEnabled = true
+                                    SweetAlertHelper.showError(this, "Cuenta Bloqueada", "Esta cuenta está bloqueada localmente.")
+                                } else {
+                                    saveUserSession(localUser.firstname.ifBlank { username }, username, isOffline = true)
+                                    btnLogin.isEnabled = true
+                                    SweetAlertHelper.showSuccess(
+                                        context = this,
+                                        title = "Modo Local",
+                                        message = "Sesión iniciada con usuario registrado localmente (${localUser.firstname.ifBlank { username }})."
+                                    ) {
+                                        proceedToMain()
+                                    }
                                 }
+                            } else {
+                                btnLogin.isEnabled = true
+                                SweetAlertHelper.showError(this, "Error de Inicio de Sesión", errorMsg)
                             }
-                        } else {
-                            btnLogin.isEnabled = true
-                            SweetAlertHelper.showError(this, "Error de Inicio de Sesión", errorMsg)
+                        }
+                    },
+                    onConnectionError = {
+                        dismissProgress()
+                        if (!isFinishing && !isDestroyed) {
+                            // Sin conexión al servidor AWS: validar estrictamente contra SQLite local
+                            loginWithLocalSqlite(username, password, proceedToMain)
                         }
                     }
                 )
             } else {
-                // Modo Offline: Validación directa en SQLite (Rúbrica Punto 9 y 10)
-                val (ok, blocked, localUser) = dbHelper.validateLocalLogin(username, password)
-                if (ok) {
-                    if (blocked) {
-                        btnLogin.isEnabled = true
-                        SweetAlertHelper.showError(this, "Cuenta Bloqueada", "Esta cuenta está bloqueada localmente por seguridad.")
-                    } else {
-                        SweetAlertHelper.showSuccess(
-                            context = this,
-                            title = "Modo Sin Conexión",
-                            message = "Acceso concedido mediante almacenamiento local SQLite."
-                        ) {
-                            proceedToMain()
-                        }
-                    }
-                } else {
-                    btnLogin.isEnabled = true
-                    SweetAlertHelper.showError(this, "Credenciales Incorrectas", "Usuario/correo o contraseña inválidos en la base local.")
-                }
+                // Modo Offline (sin Internet / sin AWS): validar estrictamente contra SQLite local (Rúbrica Punto 9 y 10)
+                loginWithLocalSqlite(username, password, proceedToMain)
             }
         }
 
@@ -260,8 +271,77 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    private fun loginWithLocalSqlite(username: String, password: String, proceedToMain: () -> Unit) {
+        val localUser = dbHelper.findUserByIdentifier(username)
+        if (localUser == null) {
+            btnLogin.isEnabled = true
+            SweetAlertHelper.showError(
+                this,
+                "Acceso Denegado",
+                "El usuario o correo ingresado no existe en la base de datos local (SQLite). Regístrate primero para poder ingresar."
+            )
+            return
+        }
+
+        if (localUser.isBlocked) {
+            btnLogin.isEnabled = true
+            SweetAlertHelper.showError(
+                this,
+                "Cuenta Bloqueada",
+                "Esta cuenta está bloqueada localmente por seguridad."
+            )
+            return
+        }
+
+        if (localUser.password != password) {
+            btnLogin.isEnabled = true
+            SweetAlertHelper.showError(
+                this,
+                "Credenciales Incorrectas",
+                "La contraseña ingresada no coincide con el usuario registrado en SQLite."
+            )
+            return
+        }
+
+        val displayName = localUser.firstname.ifBlank { username }
+        saveUserSession(displayName, username, isOffline = true)
+        btnLogin.isEnabled = true
+        SweetAlertHelper.showSuccess(
+            context = this,
+            title = "Modo Sin Conexión (SQLite)",
+            message = "Bienvenido, $displayName. Acceso validado con la base de datos local."
+        ) {
+            proceedToMain()
+        }
+    }
+
+    private fun saveUserSession(displayName: String, identifier: String, isOffline: Boolean) {
+        val userPrefs = getSharedPreferences("smarttemp_user_session", Context.MODE_PRIVATE)
+        userPrefs.edit()
+            .putBoolean("is_logged_in", true)
+            .putString("user_display_name", displayName)
+            .putString("user_identifier", identifier)
+            .putBoolean("is_offline_session", isOffline)
+            .apply()
+    }
+
+    private fun dismissProgress() {
+        try {
+            progressDialog?.dismiss()
+        } catch (_: Exception) {}
+        progressDialog = null
+    }
+
     override fun onResume() {
         super.onResume()
+        if (::btnLogin.isInitialized) {
+            btnLogin.isEnabled = true
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dismissProgress()
     }
 
     override fun onNewIntent(intent: Intent?) {

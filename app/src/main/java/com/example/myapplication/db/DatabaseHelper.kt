@@ -18,7 +18,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "iot_app_db_v5.db"
-        private const val DATABASE_VERSION = 5
+        private const val DATABASE_VERSION = 6
 
         private const val TABLE_USERS = "users"
         private const val KEY_USER_ID = "id"
@@ -105,6 +105,34 @@ class DatabaseHelper(context: Context) :
                     + KEY_SYNC_TIMESTAMP + " DATETIME DEFAULT CURRENT_TIMESTAMP" + ")")
             db.execSQL(createSyncQueueTable)
         } catch (e: Exception) {}
+
+        // Rellenar usernames faltantes en usuarios locales existentes
+        try {
+            val cursor = db.rawQuery(
+                "SELECT $KEY_USER_ID, $KEY_USER_EMAIL, $KEY_USER_FIRSTNAME, $KEY_USER_LASTNAME FROM $TABLE_USERS WHERE $KEY_USER_USERNAME IS NULL OR TRIM($KEY_USER_USERNAME) = ''",
+                null
+            )
+            if (cursor.moveToFirst()) {
+                do {
+                    val id = cursor.getInt(0)
+                    val email = cursor.getString(1) ?: ""
+                    val fn = cursor.getString(2) ?: ""
+                    val ln = cursor.getString(3) ?: ""
+                    val generatedUsername = if (email.contains("@")) {
+                        email.substringBefore("@").lowercase(Locale.getDefault()).trim()
+                    } else {
+                        val fnClean = fn.lowercase(Locale.getDefault()).replace("\\s+".toRegex(), "")
+                        val lnClean = ln.lowercase(Locale.getDefault()).replace("\\s+".toRegex(), "")
+                        "$fnClean.$lnClean"
+                    }
+                    if (generatedUsername.isNotEmpty()) {
+                        val cv = ContentValues().apply { put(KEY_USER_USERNAME, generatedUsername) }
+                        db.update(TABLE_USERS, cv, "$KEY_USER_ID = ?", arrayOf(id.toString()))
+                    }
+                } while (cursor.moveToNext())
+            }
+            cursor.close()
+        } catch (e: Exception) {}
     }
 
     private fun currentDateString(): String {
@@ -114,13 +142,14 @@ class DatabaseHelper(context: Context) :
 
     private fun insertInitialData(db: SQLiteDatabase) {
         val seedUsers = listOf(
-            User(1, "", "Jorge Luis", "Cortes Gallardo", "jorge.cortes@empresa.com", "", "Clave123!", profilePhoto = "jorge_cortes"),
-            User(2, "", "Kevin", "Encina Molina", "kevin.encina@empresa.com", "", "Clave123!", profilePhoto = "kevin_encina"),
-            User(3, "", "Scarlett", "Williams Medalla", "scarlett.williams@empresa.com", "", "Clave123!", profilePhoto = "scarlett_williams")
+            User(1, "", "Jorge Luis", "Cortes Gallardo", "jorge.cortes@empresa.com", "", "Clave123!", profilePhoto = "jorge_cortes", username = "jorge.cortes"),
+            User(2, "", "Kevin", "Encina Molina", "kevin.encina@empresa.com", "", "Clave123!", profilePhoto = "kevin_encina", username = "kevin.encina"),
+            User(3, "", "Scarlett", "Williams Medalla", "scarlett.williams@empresa.com", "", "Clave123!", profilePhoto = "scarlett_williams", username = "scarlett.williams")
         )
 
         for (u in seedUsers) {
             val cv = ContentValues().apply {
+                put(KEY_USER_USERNAME, u.username)
                 put(KEY_USER_FIRSTNAME, u.firstname)
                 put(KEY_USER_LASTNAME, u.lastname)
                 put(KEY_USER_EMAIL, u.email)
@@ -206,31 +235,89 @@ class DatabaseHelper(context: Context) :
         return exists
     }
 
-    fun validateLocalLogin(identifier: String, pass: String): Triple<Boolean, Boolean, User?> {
+    fun findUserByIdentifier(identifier: String): User? {
         val db = readableDatabase
         val clean = identifier.lowercase(Locale.getDefault()).trim()
         val cursor = db.rawQuery(
             "SELECT * FROM $TABLE_USERS WHERE LOWER($KEY_USER_EMAIL) = ? OR LOWER($KEY_USER_USERNAME) = ?",
             arrayOf(clean, clean)
         )
+        var user: User? = null
         if (cursor.moveToFirst()) {
-            val passDb = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USER_PASSWORD))
-            val blockedCol = cursor.getColumnIndex(KEY_USER_BLOCKED)
-            val isBlocked = if (blockedCol != -1) cursor.getInt(blockedCol) == 1 else false
-            val id = cursor.getInt(cursor.getColumnIndexOrThrow(KEY_USER_ID))
-            val fn = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USER_FIRSTNAME))
-            val ln = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USER_LASTNAME))
-            val em = cursor.getString(cursor.getColumnIndexOrThrow(KEY_USER_EMAIL))
-            val user = User(id = id, rut = "", firstname = fn, lastname = ln, email = em, phone = "", isBlocked = isBlocked)
-            cursor.close()
-            return if (passDb == pass) {
-                Triple(true, isBlocked, user)
-            } else {
-                Triple(false, isBlocked, null)
-            }
+            val idIdx = cursor.getColumnIndexOrThrow(KEY_USER_ID)
+            val fnIdx = cursor.getColumnIndexOrThrow(KEY_USER_FIRSTNAME)
+            val lnIdx = cursor.getColumnIndexOrThrow(KEY_USER_LASTNAME)
+            val emailIdx = cursor.getColumnIndexOrThrow(KEY_USER_EMAIL)
+            val passIdx = cursor.getColumnIndexOrThrow(KEY_USER_PASSWORD)
+            val photoIdx = cursor.getColumnIndex(KEY_USER_PHOTO)
+            val userIdx = cursor.getColumnIndex(KEY_USER_USERNAME)
+            val blockIdx = cursor.getColumnIndex(KEY_USER_BLOCKED)
+            val syncIdx = cursor.getColumnIndex(KEY_USER_SYNC_STATUS)
+
+            user = User(
+                id = cursor.getInt(idIdx),
+                rut = "",
+                firstname = cursor.getString(fnIdx) ?: "",
+                lastname = cursor.getString(lnIdx) ?: "",
+                email = cursor.getString(emailIdx) ?: "",
+                phone = "",
+                password = cursor.getString(passIdx) ?: "",
+                profilePhoto = if (photoIdx != -1 && !cursor.isNull(photoIdx)) cursor.getString(photoIdx) else null,
+                username = if (userIdx != -1 && !cursor.isNull(userIdx)) cursor.getString(userIdx) else "",
+                isBlocked = if (blockIdx != -1) cursor.getInt(blockIdx) == 1 else false,
+                syncStatus = if (syncIdx != -1 && !cursor.isNull(syncIdx)) cursor.getInt(syncIdx) else 1
+            )
         }
         cursor.close()
-        return Triple(false, false, null)
+        return user
+    }
+
+    fun upsertUserFromLogin(user: User, rawPassword: String) {
+        val cleanEmail = user.email.lowercase(Locale.getDefault()).trim()
+        if (cleanEmail.isEmpty()) return
+
+        val db = writableDatabase
+        val defaultUsername = if (user.username.isNotEmpty()) user.username.lowercase(Locale.getDefault()).trim() else {
+            if (cleanEmail.contains("@")) {
+                cleanEmail.substringBefore("@")
+            } else {
+                val fnClean = user.firstname.lowercase(Locale.getDefault()).replace("\\s+".toRegex(), "")
+                val lnClean = user.lastname.lowercase(Locale.getDefault()).replace("\\s+".toRegex(), "")
+                "$fnClean.$lnClean"
+            }
+        }
+
+        val values = ContentValues().apply {
+            put(KEY_USER_USERNAME, defaultUsername)
+            put(KEY_USER_FIRSTNAME, user.firstname)
+            put(KEY_USER_LASTNAME, user.lastname)
+            put(KEY_USER_EMAIL, cleanEmail)
+            if (rawPassword.isNotEmpty()) {
+                put(KEY_USER_PASSWORD, rawPassword)
+            }
+            put(KEY_USER_PHOTO, user.profilePhoto)
+            put(KEY_USER_BLOCKED, if (user.isBlocked) 1 else 0)
+            put(KEY_USER_SYNC_STATUS, 1)
+        }
+
+        val updated = db.update(TABLE_USERS, values, "LOWER($KEY_USER_EMAIL) = ?", arrayOf(cleanEmail))
+        if (updated == 0) {
+            if (rawPassword.isEmpty()) {
+                values.put(KEY_USER_PASSWORD, "Clave123!")
+            }
+            try {
+                db.insertWithOnConflict(TABLE_USERS, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun validateLocalLogin(identifier: String, pass: String): Triple<Boolean, Boolean, User?> {
+        val user = findUserByIdentifier(identifier) ?: return Triple(false, false, null)
+        return if (user.password == pass) {
+            Triple(true, user.isBlocked, user)
+        } else {
+            Triple(false, user.isBlocked, null)
+        }
     }
 
     fun blockUserByEmail(email: String): Boolean {
@@ -358,19 +445,38 @@ class DatabaseHelper(context: Context) :
 
     fun syncLocalUsersWithRemote(remoteUsers: List<User>) {
         val db = writableDatabase
+        val existingPasswordsByEmail = mutableMapOf<String, String>()
+        val existingCursor = db.rawQuery("SELECT $KEY_USER_EMAIL, $KEY_USER_PASSWORD FROM $TABLE_USERS", null)
+        if (existingCursor.moveToFirst()) {
+            do {
+                val em = existingCursor.getString(0)?.lowercase(Locale.getDefault())?.trim() ?: ""
+                val pw = existingCursor.getString(1) ?: ""
+                if (em.isNotEmpty() && pw.isNotEmpty()) {
+                    existingPasswordsByEmail[em] = pw
+                }
+            } while (existingCursor.moveToNext())
+        }
+        existingCursor.close()
+
         for (u in remoteUsers) {
+            val cleanEmail = u.email.lowercase(Locale.getDefault()).trim()
             val defaultUsername = if (u.username.isNotEmpty()) u.username else {
                 val fnClean = u.firstname.lowercase(Locale.getDefault()).replace("\\s+".toRegex(), "")
                 val lnClean = u.lastname.lowercase(Locale.getDefault()).replace("\\s+".toRegex(), "")
                 "$fnClean.$lnClean"
+            }
+            val resolvedPassword = when {
+                u.password.isNotEmpty() -> u.password
+                existingPasswordsByEmail[cleanEmail]?.isNotEmpty() == true -> existingPasswordsByEmail[cleanEmail]!!
+                else -> "Clave123!"
             }
             val cv = ContentValues().apply {
                 put(KEY_USER_ID, u.id)
                 put(KEY_USER_USERNAME, defaultUsername)
                 put(KEY_USER_FIRSTNAME, u.firstname)
                 put(KEY_USER_LASTNAME, u.lastname)
-                put(KEY_USER_EMAIL, u.email.lowercase(Locale.getDefault()).trim())
-                put(KEY_USER_PASSWORD, if (u.password.isNotEmpty()) u.password else "Clave123!")
+                put(KEY_USER_EMAIL, cleanEmail)
+                put(KEY_USER_PASSWORD, resolvedPassword)
                 put(KEY_USER_PHOTO, u.profilePhoto)
                 put(KEY_USER_BLOCKED, if (u.isBlocked) 1 else 0)
                 put(KEY_USER_SYNC_STATUS, 1)

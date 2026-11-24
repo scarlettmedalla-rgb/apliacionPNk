@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cn.pedant.SweetAlert.SweetAlertDialog
 import com.example.myapplication.db.DatabaseHelper
 import com.example.myapplication.model.User
 import com.example.myapplication.util.EdgeToEdgeHelper
@@ -34,6 +35,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private var isPass1Visible = false
     private var isPass2Visible = false
+    private var progressDialog: SweetAlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -285,24 +287,31 @@ class RegisterActivity : AppCompatActivity() {
             }
 
             if (com.example.myapplication.util.NetworkHelper.isOnline(this)) {
+                progressDialog = SweetAlertHelper.showProgress(this, "Registrando usuario...")
                 // Rúbrica Punto 5: Registra usuarios en MySQL mediante la API
                 com.example.myapplication.network.AwsApiService.guardarUsuario(
                     context = this,
                     user = newUser,
                     onSuccess = {
-                        dbHelper.insertUser(newUser, syncStatus = 1)
-                        proceedToLogin()
+                        dismissProgress()
+                        if (!isFinishing && !isDestroyed) {
+                            dbHelper.insertUser(newUser, syncStatus = 1)
+                            proceedToLogin()
+                        }
                     },
                     onError = { errorMsg ->
-                        if (errorMsg.contains("duplicado", ignoreCase = true) || errorMsg.contains("existe", ignoreCase = true) || errorMsg.contains("ya se encuentra", ignoreCase = true)) {
-                            btnRegistrar.isEnabled = true
-                            SweetAlertHelper.showError(this, "Datos Duplicados", errorMsg)
-                        } else {
-                            // Si falla por red u otro motivo, guardar localmente y encolar sincronización
-                            val localId = dbHelper.insertUser(newUser, syncStatus = 0)
-                            val userWithId = newUser.copy(id = localId.toInt(), syncStatus = 0)
-                            dbHelper.addSyncAction("INSERT", localId.toInt(), com.example.myapplication.util.SyncManager.userToJson(userWithId))
-                            proceedToLogin()
+                        dismissProgress()
+                        if (!isFinishing && !isDestroyed) {
+                            if (errorMsg.contains("duplicado", ignoreCase = true) || errorMsg.contains("existe", ignoreCase = true) || errorMsg.contains("ya se encuentra", ignoreCase = true)) {
+                                btnRegistrar.isEnabled = true
+                                SweetAlertHelper.showError(this, "Datos Duplicados", errorMsg)
+                            } else {
+                                // Si falla por red u otro motivo, guardar localmente en SQLite y encolar sincronización
+                                val localId = dbHelper.insertUser(newUser, syncStatus = 0)
+                                val userWithId = newUser.copy(id = localId.toInt(), syncStatus = 0)
+                                dbHelper.addSyncAction("INSERT", localId.toInt(), com.example.myapplication.util.SyncManager.userToJson(userWithId))
+                                proceedToLogin()
+                            }
                         }
                     }
                 )
@@ -316,6 +325,13 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
+    private fun dismissProgress() {
+        try {
+            progressDialog?.dismiss()
+        } catch (_: Exception) {}
+        progressDialog = null
+    }
+
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         if (com.example.myapplication.util.SwipeBackHelper.processDispatchTouchEvent(this, ev)) {
             return true
@@ -325,5 +341,10 @@ class RegisterActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dismissProgress()
     }
 }

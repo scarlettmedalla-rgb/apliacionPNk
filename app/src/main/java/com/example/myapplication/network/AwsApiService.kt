@@ -3,6 +3,7 @@ package com.example.myapplication.network
 import android.content.Context
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.Request
+import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.example.myapplication.model.Sensor
@@ -26,7 +27,16 @@ object AwsApiService {
     // Comienza con http:// y termina con /api/
     private const val BASE_URL = "http://3.213.54.19/api/"
 
-    private fun getQueue(context: Context) = Volley.newRequestQueue(context.applicationContext)
+    @Volatile
+    private var requestQueue: RequestQueue? = null
+
+    private fun getQueue(context: Context): RequestQueue {
+        return requestQueue ?: synchronized(this) {
+            requestQueue ?: Volley.newRequestQueue(context.applicationContext).also {
+                requestQueue = it
+            }
+        }
+    }
 
     // =========================================================================
     // 1. INICIO DE SESIÓN
@@ -37,7 +47,8 @@ object AwsApiService {
         pass: String,
         onSuccess: (User) -> Unit,
         onBlocked: (String) -> Unit,
-        onError: (String) -> Unit
+        onError: (String) -> Unit,
+        onConnectionError: (String) -> Unit = onError
     ) {
         val url = BASE_URL + "iniciar_sesion.php"
         val body = JSONObject().apply {
@@ -80,15 +91,17 @@ object AwsApiService {
                         syncStatus = 1
                     )
                     onSuccess(user)
+                } else if (message.contains("Error de conexión", ignoreCase = true) || status.isEmpty()) {
+                    onConnectionError(message.ifEmpty { "El servidor AWS no está disponible." })
                 } else {
                     onError(message)
                 }
             },
             { error ->
-                onError(error.localizedMessage ?: "Error de conexión con el servidor AWS")
+                onConnectionError(error.localizedMessage ?: "No se pudo conectar con el servidor AWS")
             }
         ).apply {
-            retryPolicy = DefaultRetryPolicy(8000, 1, 1f)
+            retryPolicy = DefaultRetryPolicy(3000, 0, 1f)
         }
 
         getQueue(context).add(request)
@@ -237,7 +250,9 @@ object AwsApiService {
                 }
             },
             { error -> onError(error.localizedMessage ?: "Error al conectar con AWS") }
-        )
+        ).apply {
+            retryPolicy = DefaultRetryPolicy(3000, 0, 1f)
+        }
         getQueue(context).add(request)
     }
 
@@ -268,7 +283,9 @@ object AwsApiService {
                 if (status == "success") onSuccess(message) else onError(message)
             },
             { error -> onError(error.localizedMessage ?: "Error al guardar usuario en AWS") }
-        )
+        ).apply {
+            retryPolicy = DefaultRetryPolicy(3000, 0, 1f)
+        }
         getQueue(context).add(request)
     }
 
@@ -295,7 +312,9 @@ object AwsApiService {
                 if (status == "success") onSuccess(message) else onError(message)
             },
             { error -> onError(error.localizedMessage ?: "Error al actualizar en AWS") }
-        )
+        ).apply {
+            retryPolicy = DefaultRetryPolicy(3000, 0, 1f)
+        }
         getQueue(context).add(request)
     }
 
@@ -316,7 +335,9 @@ object AwsApiService {
                 if (status == "success") onSuccess(message) else onError(message)
             },
             { error -> onError(error.localizedMessage ?: "Error al eliminar en AWS") }
-        )
+        ).apply {
+            retryPolicy = DefaultRetryPolicy(3000, 0, 1f)
+        }
         getQueue(context).add(request)
     }
 
